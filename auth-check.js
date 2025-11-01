@@ -41,11 +41,10 @@ async function checkToolAccess(toolName) {
         const freeUses = getFreeUses(toolName);
         
         if (freeUses < 4) {
-            incrementFreeUses(toolName);
             return { 
                 hasAccess: true, 
                 reason: 'free_trial', 
-                usesRemaining: 4 - freeUses - 1 
+                usesRemaining: 4 - freeUses
             };
         }
         
@@ -61,7 +60,7 @@ async function checkToolAccess(toolName) {
 // Show upgrade modal
 function showUpgradeModal(toolName, usesRemaining = null) {
     const modalHTML = `
-        <div id="upgrade-modal" style="
+        <div id="upgrade-modal" onclick="if(event.target.id === 'upgrade-modal') this.remove()" style="
             position: fixed;
             top: 0;
             left: 0;
@@ -72,14 +71,27 @@ function showUpgradeModal(toolName, usesRemaining = null) {
             align-items: center;
             justify-content: center;
             z-index: 10000;
+            cursor: pointer;
         ">
-            <div style="
+            <div onclick="event.stopPropagation()" style="
                 background: white;
                 padding: 40px;
                 border-radius: 12px;
                 max-width: 500px;
                 text-align: center;
+                cursor: default;
+                position: relative;
             ">
+                <button onclick="document.getElementById('upgrade-modal').remove()" style="
+                    position: absolute;
+                    top: 15px;
+                    right: 15px;
+                    background: none;
+                    border: none;
+                    font-size: 24px;
+                    cursor: pointer;
+                    color: #718096;
+                ">×</button>
                 <h2 style="color: #2d3748; margin-bottom: 20px;">
                     ${usesRemaining !== null ? `${usesRemaining} Free Uses Remaining` : 'Upgrade to Continue'}
                 </h2>
