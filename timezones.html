@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team Timezone Converter - SimpleBizTools</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .timezone-container {
+            max-width: 900px;
+            margin: 40px auto;
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.07);
+        }
+
+        .team-member {
+            display: grid;
+            grid-template-columns: 2fr 2fr 3fr auto;
+            gap: 15px;
+            align-items: center;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .team-member input,
+        .team-member select {
+            padding: 10px;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 1em;
+        }
+
+        .team-member input:focus,
+        .team-member select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .time-display {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #667eea;
+            text-align: center;
+        }
+
+        .time-indicator {
+            font-size: 0.9em;
+            color: #718096;
+            margin-top: 5px;
+        }
+
+        .add-member-btn {
+            width: 100%;
+            padding: 15px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 20px 0;
+        }
+
+        .add-member-btn:hover {
+            background: #5568d3;
+        }
+
+        .current-time-banner {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .current-time-banner h2 {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            opacity: 0.9;
+        }
+
+        .current-time-banner .time {
+            font-size: 3em;
+            font-weight: bold;
+        }
+
+        .working-hours {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .working-hours.work {
+            background: #48bb78;
+            color: white;
+        }
+
+        .working-hours.off {
+            background: #fc8181;
+            color: white;
+        }
+
+        .working-hours.sleep {
+            background: #4a5568;
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .team-member {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1><a href="index.html" style="color: white; text-decoration: none;">SimpleBizTools</a></h1>
+            <p class="tagline">Team Timezone Converter</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="hero">
+            <h2>Know Your Team's Local Time</h2>
+            <p>See what time it is for everyone on your distributed team.</p>
+        </section>
+
+        <div class="timezone-container">
+            <div class="current-time-banner">
+                <h2>Your Current Time</h2>
+                <div class="time" id="your-time">--:--:--</div>
+                <div class="time-indicator" id="your-timezone">Loading...</div>
+            </div>
+
+            <h3>Team Members</h3>
+            
+            <div id="team-list">
+                <div class="team-member">
+                    <input type="text" placeholder="Name" class="member-name" value="Sarah Chen">
+                    <input type="text" placeholder="Role" class="member-role" value="Designer">
+                    <select class="member-timezone" onchange="updateTimes()">
+                        <option value="America/New_York">Eastern Time (ET)</option>
+                        <option value="America/Chicago">Central Time (CT)</option>
+                        <option value="America/Denver">Mountain Time (MT)</option>
+                        <option value="America/Los_Angeles" selected>Pacific Time (PT)</option>
+                        <option value="Europe/London">London (GMT)</option>
+                        <option value="Europe/Paris">Paris (CET)</option>
+                        <option value="Europe/Berlin">Berlin (CET)</option>
+                        <option value="Asia/Tokyo">Tokyo (JST)</option>
+                        <option value="Asia/Shanghai">Shanghai (CST)</option>
+                        <option value="Asia/Singapore">Singapore (SGT)</option>
+                        <option value="Asia/Dubai">Dubai (GST)</option>
+                        <option value="Australia/Sydney">Sydney (AEDT)</option>
+                    </select>
+                    <div class="time-info">
+                        <div class="time-display member-time">--:--</div>
+                        <div class="time-indicator member-status"></div>
+                    </div>
+                    <button class="remove-btn" onclick="removeMember(this)">Remove</button>
+                </div>
+            </div>
+
+            <button class="add-member-btn" onclick="addMember()">+ Add Team Member</button>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 SimpleBizTools. <a href="index.html" style="color: white;">Back to Home</a></p>
+        </div>
+    </footer>
+
+    <script>
+        function updateTimes() {
+            // Update your time
+            const now = new Date();
+            const yourTimeStr = now.toLocaleTimeString('en-US', { 
+                hour: '2-digit', 
+                minute: '2-digit', 
+                second: '2-digit' 
+            });
+            document.getElementById('your-time').textContent = yourTimeStr;
+            document.getElementById('your-timezone').textContent = 
+                Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+            // Update team member times
+            document.querySelectorAll('.team-member').forEach(member => {
+                const timezone = member.querySelector('.member-timezone').value;
+                const timeDisplay = member.querySelector('.member-time');
+                const statusDisplay = member.querySelector('.member-status');
+                
+                const memberTime = new Date().toLocaleTimeString('en-US', {
+                    timeZone: timezone,
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                
+                const hour = parseInt(new Date().toLocaleTimeString('en-US', {
+                    timeZone: timezone,
+                    hour: '2-digit',
+                    hour12: false
+                }));
+                
+                timeDisplay.textContent = memberTime;
+                
+                let status = '';
+                let statusClass = '';
+                if (hour >= 9 && hour < 17) {
+                    status = 'Working Hours';
+                    statusClass = 'work';
+                } else if (hour >= 17 && hour < 23) {
+                    status = 'After Hours';
+                    statusClass = 'off';
+                } else {
+                    status = 'Sleeping';
+                    statusClass = 'sleep';
+                }
+                
+                statusDisplay.innerHTML = `<span class="working-hours ${statusClass}">${status}</span>`;
+            });
+        }
+
+        function addMember() {
+            const list = document.getElementById('team-list');
+            const member = document.createElement('div');
+            member.className = 'team-member';
+            member.innerHTML = `
+                <input type="text" placeholder="Name" class="member-name">
+                <input type="text" placeholder="Role" class="member-role">
+                <select class="member-timezone" onchange="updateTimes()">
+                    <option value="America/New_York">Eastern Time (ET)</option>
+                    <option value="America/Chicago">Central Time (CT)</option>
+                    <option value="America/Denver">Mountain Time (MT)</option>
+                    <option value="America/Los_Angeles">Pacific Time (PT)</option>
+                    <option value="Europe/London">London (GMT)</option>
+                    <option value="Europe/Paris">Paris (CET)</option>
+                    <option value="Europe/Berlin">Berlin (CET)</option>
+                    <option value="Asia/Tokyo">Tokyo (JST)</option>
+                    <option value="Asia/Shanghai">Shanghai (CST)</option>
+                    <option value="Asia/Singapore">Singapore (SGT)</option>
+                    <option value="Asia/Dubai">Dubai (GST)</option>
+                    <option value="Australia/Sydney">Sydney (AEDT)</option>
+                </select>
+                <div class="time-info">
+                    <div class="time-display member-time">--:--</div>
+                    <div class="time-indicator member-status"></div>
+                </div>
+                <button class="remove-btn" onclick="removeMember(this)">Remove</button>
+            `;
+            list.appendChild(member);
+            updateTimes();
+        }
+
+        function removeMember(btn) {
+            btn.closest('.team-member').remove();
+        }
+
+        // Update times every second
+        setInterval(updateTimes, 1000);
+        updateTimes();
+    </script>
+</body>
+</html>
