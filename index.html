@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SimpleBizTools - Essential Business Tools</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="auth-check.js"></script>
 </head>
 <body>
     <header>
@@ -70,7 +72,7 @@
                         <li>Unlimited usage</li>
                         <li>Email support</li>
                     </ul>
-                    <a href="https://www.paypal.com/ncp/payment/5VVE85FV89JUA" class="btn btn-primary" target="_blank" style="display: inline-block; margin-top: 20px; padding: 15px 30px; background: #667eea; color: white; text-decoration: none; border-radius: 8px; font-weight: 600;">Get Started</a>
+                    <div id="paypal-button-container-P-9M74147901295574ENEDFVNA" style="margin-top: 20px; min-height: 150px;"></div>
                 </div>
                 <div class="pricing-card featured">
                     <div class="badge">Best Value</div>
@@ -107,6 +109,26 @@
 
     <script src="https://www.paypal.com/sdk/js?client-id=AVT7yA-Ol5ZAxDc686NxPz-YI_ajoNpxJv4z3v1mCjUQBoWeNsTtCdkfX4gvtHoAUsH3iz4vxWxHWD-u&vault=true&intent=subscription" data-sdk-integration-source="button-factory"></script>
     <script>
+      // Individual Tool Subscription Button ($14.99)
+      paypal.Buttons({
+          style: {
+              shape: 'pill',
+              color: 'gold',
+              layout: 'vertical',
+              label: 'subscribe'
+          },
+          createSubscription: function(data, actions) {
+            return actions.subscription.create({
+              plan_id: 'P-9M74147901295574ENEDFVNA'
+            });
+          },
+          onApprove: function(data, actions) {
+            alert('Thanks for subscribing! Please create an account with the same email you used in PayPal. We will activate your access within 24 hours.');
+            window.location.href = 'auth.html';
+          }
+      }).render('#paypal-button-container-P-9M74147901295574ENEDFVNA');
+
+      // Full Suite Subscription Button ($39.99)
       paypal.Buttons({
           style: {
               shape: 'pill',
@@ -120,7 +142,8 @@
             });
           },
           onApprove: function(data, actions) {
-            alert('Thanks for subscribing! Check your email for access details.');
+            alert('Thanks for subscribing! Please create an account with the same email you used in PayPal. We will activate your access within 24 hours.');
+            window.location.href = 'auth.html';
           }
       }).render('#paypal-button-container-P-4TW04507V0019881ANEDEGUA');
     </script>
