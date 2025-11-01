@@ -95,6 +95,52 @@
             cursor: not-allowed;
         }
 
+        .google-button {
+            width: 100%;
+            padding: 15px;
+            background: white;
+            color: #2d3748;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .google-button:hover {
+            border-color: #667eea;
+            background: #f7fafc;
+        }
+
+        .divider {
+            text-align: center;
+            margin: 25px 0;
+            position: relative;
+        }
+
+        .divider:before {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: #e2e8f0;
+        }
+
+        .divider span {
+            background: white;
+            padding: 0 15px;
+            position: relative;
+            color: #718096;
+        }
+
         .error-message {
             background: #fed7d7;
             color: #c53030;
@@ -153,6 +199,19 @@
 
             <div id="error-message" class="error-message"></div>
             <div id="success-message" class="success-message"></div>
+
+            <!-- Google Sign In Button (shown for both tabs) -->
+            <button class="google-button" onclick="signInWithGoogle()">
+                <svg width="20" height="20" viewBox="0 0 20 20">
+                    <path fill="#4285F4" d="M19.6 10.23c0-.82-.1-1.42-.25-2.05H10v3.72h5.5c-.15.96-.74 2.31-2.04 3.22v2.45h3.16c1.89-1.73 2.98-4.3 2.98-7.34z"/>
+                    <path fill="#34A853" d="M13.46 15.13c-.83.59-1.96 1-3.46 1-2.64 0-4.88-1.74-5.68-4.15H1.07v2.52C2.72 17.75 6.09 20 10 20c2.7 0 4.96-.89 6.62-2.42l-3.16-2.45z"/>
+                    <path fill="#FBBC05" d="M3.99 10c0-.69.12-1.35.32-1.97V5.51H1.07A9.973 9.973 0 000 10c0 1.61.39 3.14 1.07 4.49l3.24-2.52c-.2-.62-.32-1.28-.32-1.97z"/>
+                    <path fill="#EA4335" d="M10 3.88c1.88 0 3.13.81 3.85 1.48l2.84-2.76C14.96.99 12.7 0 10 0 6.09 0 2.72 2.25 1.07 5.51l3.24 2.52C5.12 5.62 7.36 3.88 10 3.88z"/>
+                </svg>
+                Continue with Google
+            </button>
+
+            <div class="divider"><span>OR</span></div>
 
             <!-- Login Form -->
             <form id="login-form" class="auth-form active" onsubmit="handleLogin(event)">
@@ -239,6 +298,23 @@
             document.getElementById('success-message').classList.remove('show');
         }
 
+        async function signInWithGoogle() {
+            hideMessages();
+            try {
+                const { data, error } = await supabase.auth.signInWithOAuth({
+                    provider: 'google',
+                    options: {
+                        redirectTo: window.location.origin + '/index.html'
+                    }
+                });
+                
+                if (error) throw error;
+                
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
         async function handleLogin(event) {
             event.preventDefault();
             hideMessages();
@@ -260,7 +336,7 @@
                 
                 showSuccess('Login successful! Redirecting...');
                 setTimeout(() => {
-                    window.location.href = 'index.html';
+                    window.location.href = 'index.html#pricing';
                 }, 1500);
                 
             } catch (error) {
@@ -289,13 +365,14 @@
                     options: {
                         data: {
                             full_name: name
-                        }
+                        },
+                        emailRedirectTo: window.location.origin + '/index.html#pricing'
                     }
                 });
                 
                 if (error) throw error;
                 
-                showSuccess('Account created! Please check your email to verify your account.');
+                showSuccess('Account created! Please check your email to verify your account, then you can subscribe to a plan.');
                 document.getElementById('signup-form').reset();
                 
             } catch (error) {
@@ -309,7 +386,7 @@
         // Check if already logged in
         supabase.auth.getSession().then(({ data: { session } }) => {
             if (session) {
-                window.location.href = 'index.html';
+                window.location.href = 'index.html#pricing';
             }
         });
     </script>
