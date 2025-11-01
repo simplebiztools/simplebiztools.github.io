@@ -63,6 +63,21 @@
 
         <section id="pricing" class="pricing-section">
             <h2>Simple Pricing</h2>
+            
+            <!-- Login Required Notice -->
+            <div id="login-notice" style="display: none; background: #fff3cd; padding: 20px; border-radius: 8px; margin-bottom: 30px; text-align: center;">
+                <h3 style="color: #856404; margin-bottom: 10px;">🔒 Account Required</h3>
+                <p style="color: #856404; margin-bottom: 15px;">Please sign in or create an account to subscribe to a plan.</p>
+                <a href="auth.html" style="display: inline-block; padding: 12px 30px; background: #667eea; color: white; text-decoration: none; border-radius: 6px; font-weight: 600;">Sign In / Create Account</a>
+            </div>
+
+            <!-- Email Match Warning (shown when logged in) -->
+            <div id="email-warning" style="display: none; background: #e6f7ff; padding: 20px; border-radius: 8px; margin-bottom: 30px; text-align: center; border: 2px solid #1890ff;">
+                <h3 style="color: #0050b3; margin-bottom: 10px;">⚠️ Important: Use Your Account Email</h3>
+                <p style="color: #0050b3; margin-bottom: 10px;">You're signed in as: <strong id="user-email-display"></strong></p>
+                <p style="color: #0050b3;">Please use this SAME email when paying with PayPal to ensure instant access to your tools.</p>
+            </div>
+
             <div class="pricing-options">
                 <div class="pricing-card">
                     <h3>Individual Tools</h3>
@@ -72,19 +87,23 @@
                         <li>Unlimited usage</li>
                         <li>Email support</li>
                     </ul>
-                    <div id="paypal-button-container-P-9M74147901295574ENEDFVNA" style="margin-top: 20px; min-height: 150px;"></div>
+                    <div id="individual-paypal-container" style="margin-top: 20px; min-height: 150px;">
+                        <!-- PayPal button will appear here when logged in -->
+                    </div>
                 </div>
                 <div class="pricing-card featured">
                     <div class="badge">Best Value</div>
                     <h3>Full Suite</h3>
                     <p class="price">$39.99<span>/month</span></p>
                     <ul>
-                        <li>All 5 tools included</li>
+                        <li>All tools included</li>
                         <li>Unlimited usage</li>
                         <li>Priority support</li>
                         <li>Early access to new tools</li>
                     </ul>
-                    <div id="paypal-button-container-P-4TW04507V0019881ANEDEGUA" style="margin-top: 20px; min-height: 150px;"></div>
+                    <div id="fullsuite-paypal-container" style="margin-top: 20px; min-height: 150px;">
+                        <!-- PayPal button will appear here when logged in -->
+                    </div>
                 </div>
                 <div class="pricing-card">
                     <h3>Lifetime Deal</h3>
@@ -95,7 +114,9 @@
                         <li>Unlimited usage</li>
                         <li>Premium support</li>
                     </ul>
-                    <a href="https://www.paypal.com/ncp/payment/K53FU4G4SCYBN" class="btn btn-primary" target="_blank" style="display: inline-block; margin-top: 20px; padding: 15px 30px; background: #667eea; color: white; text-decoration: none; border-radius: 8px; font-weight: 600;">Buy Lifetime Access</a>
+                    <div id="lifetime-paypal-container" style="margin-top: 20px;">
+                        <!-- PayPal button will appear here when logged in -->
+                    </div>
                 </div>
             </div>
         </section>
@@ -109,43 +130,89 @@
 
     <script src="https://www.paypal.com/sdk/js?client-id=AVT7yA-Ol5ZAxDc686NxPz-YI_ajoNpxJv4z3v1mCjUQBoWeNsTtCdkfX4gvtHoAUsH3iz4vxWxHWD-u&vault=true&intent=subscription" data-sdk-integration-source="button-factory"></script>
     <script>
-      // Individual Tool Subscription Button ($14.99)
-      paypal.Buttons({
-          style: {
-              shape: 'pill',
-              color: 'gold',
-              layout: 'vertical',
-              label: 'subscribe'
-          },
-          createSubscription: function(data, actions) {
-            return actions.subscription.create({
-              plan_id: 'P-9M74147901295574ENEDFVNA'
-            });
-          },
-          onApprove: function(data, actions) {
-            alert('Thanks for subscribing! Please create an account with the same email you used in PayPal. We will activate your access within 24 hours.');
-            window.location.href = 'auth.html';
-          }
-      }).render('#paypal-button-container-P-9M74147901295574ENEDFVNA');
+        // Initialize Supabase
+        const supabaseUrl = 'https://tbrafvmlpridqosgrosy.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRicmFmdm1scHJpZHFvc2dyb3N5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIwMDI1MjMsImV4cCI6MjA3NzU3ODUyM30.rIh2mIEDKBJqmiV8Q3U71_YCYM-WJ_4xcdx_bcQw1NU';
+        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-      // Full Suite Subscription Button ($39.99)
-      paypal.Buttons({
-          style: {
-              shape: 'pill',
-              color: 'gold',
-              layout: 'vertical',
-              label: 'subscribe'
-          },
-          createSubscription: function(data, actions) {
-            return actions.subscription.create({
-              plan_id: 'P-4TW04507V0019881ANEDEGUA'
-            });
-          },
-          onApprove: function(data, actions) {
-            alert('Thanks for subscribing! Please create an account with the same email you used in PayPal. We will activate your access within 24 hours.');
-            window.location.href = 'auth.html';
-          }
-      }).render('#paypal-button-container-P-4TW04507V0019881ANEDEGUA');
+        // Check if user is logged in and show/hide PayPal buttons
+        async function initializePricing() {
+            const { data: { session } } = await supabase.auth.getSession();
+            
+            if (!session) {
+                // Not logged in - show login notice
+                document.getElementById('login-notice').style.display = 'block';
+                document.getElementById('email-warning').style.display = 'none';
+            } else {
+                // Logged in - show email warning and PayPal buttons
+                document.getElementById('login-notice').style.display = 'none';
+                document.getElementById('email-warning').style.display = 'block';
+                document.getElementById('user-email-display').textContent = session.user.email;
+                
+                // Render PayPal buttons with pre-filled email
+                renderPayPalButtons(session.user.email);
+            }
+        }
+
+        function renderPayPalButtons(userEmail) {
+            // Individual Tool Subscription Button ($14.99)
+            paypal.Buttons({
+                style: {
+                    shape: 'pill',
+                    color: 'gold',
+                    layout: 'vertical',
+                    label: 'subscribe'
+                },
+                createSubscription: function(data, actions) {
+                    return actions.subscription.create({
+                        plan_id: 'P-9M74147901295574ENEDFVNA',
+                        subscriber: {
+                            email_address: userEmail
+                        }
+                    });
+                },
+                onApprove: function(data, actions) {
+                    alert('Thanks for subscribing! Your access will be activated shortly. Please check your email.');
+                    window.location.reload();
+                }
+            }).render('#individual-paypal-container');
+
+            // Full Suite Subscription Button ($39.99)
+            paypal.Buttons({
+                style: {
+                    shape: 'pill',
+                    color: 'gold',
+                    layout: 'vertical',
+                    label: 'subscribe'
+                },
+                createSubscription: function(data, actions) {
+                    return actions.subscription.create({
+                        plan_id: 'P-4TW04507V0019881ANEDEGUA',
+                        subscriber: {
+                            email_address: userEmail
+                        }
+                    });
+                },
+                onApprove: function(data, actions) {
+                    alert('Thanks for subscribing! Your access will be activated shortly. Please check your email.');
+                    window.location.reload();
+                }
+            }).render('#fullsuite-paypal-container');
+
+            // Lifetime Deal Button ($299)
+            const lifetimeContainer = document.getElementById('lifetime-paypal-container');
+            lifetimeContainer.innerHTML = `
+                <a href="https://www.paypal.com/ncp/payment/K53FU4G4SCYBN" 
+                   class="btn btn-primary" 
+                   target="_blank" 
+                   style="display: inline-block; margin-top: 20px; padding: 15px 30px; background: #667eea; color: white; text-decoration: none; border-radius: 8px; font-weight: 600;">
+                   Buy Lifetime Access
+                </a>
+            `;
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', initializePricing);
     </script>
 </body>
 </html>
