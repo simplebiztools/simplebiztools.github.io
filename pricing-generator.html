@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pricing Table Generator - SimpleBizTools</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="auth-check.js"></script>
     <style>
         .generator-container {
             display: grid;
@@ -303,6 +305,27 @@ White Label Option</textarea>
     </footer>
 
     <script>
+        // Check access on page load
+        (async function() {
+            const access = await checkToolAccess('pricing_generator');
+            
+            if (!access.hasAccess) {
+                // Block access - show upgrade modal
+                showUpgradeModal('pricing_generator');
+                // Disable all form inputs
+                document.querySelectorAll('input, textarea, button').forEach(el => {
+                    if (!el.closest('#upgrade-modal')) {
+                        el.disabled = true;
+                    }
+                });
+            } else if (access.reason === 'free_trial' && access.usesRemaining !== undefined) {
+                // Show reminder about remaining uses
+                if (access.usesRemaining <= 1) {
+                    showUpgradeModal('pricing_generator', access.usesRemaining);
+                }
+            }
+        })();
+
         function updatePreview() {
             const preview = document.getElementById('pricing-preview');
             
