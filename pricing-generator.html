@@ -135,6 +135,8 @@
             border-radius: 6px;
             font-weight: 600;
             margin-top: 20px;
+            cursor: default;
+            pointer-events: none;
         }
 
         .action-buttons {
@@ -224,6 +226,10 @@
                         <input type="text" id="plan1-period" value="/month" onkeyup="updatePreview()">
                     </div>
                     <div class="form-group">
+                        <label>Button Text</label>
+                        <input type="text" id="plan1-button" value="Get Started" onkeyup="updatePreview()">
+                    </div>
+                    <div class="form-group">
                         <label>Features (one per line)</label>
                         <textarea id="plan1-features" rows="4" onkeyup="updatePreview()">10 Projects
 Basic Support
@@ -247,6 +253,10 @@ Email Integration</textarea>
                         <input type="text" id="plan2-period" value="/month" onkeyup="updatePreview()">
                     </div>
                     <div class="form-group">
+                        <label>Button Text</label>
+                        <input type="text" id="plan2-button" value="Get Started" onkeyup="updatePreview()">
+                    </div>
+                    <div class="form-group">
                         <label>Features (one per line)</label>
                         <textarea id="plan2-features" rows="4" onkeyup="updatePreview()">Unlimited Projects
 Priority Support
@@ -268,6 +278,10 @@ Advanced Analytics</textarea>
                     <div class="form-group">
                         <label>Billing Period</label>
                         <input type="text" id="plan3-period" value="/month" onkeyup="updatePreview()">
+                    </div>
+                    <div class="form-group">
+                        <label>Button Text</label>
+                        <input type="text" id="plan3-button" value="Get Started" onkeyup="updatePreview()">
                     </div>
                     <div class="form-group">
                         <label>Features (one per line)</label>
@@ -307,7 +321,7 @@ White Label Option</textarea>
     <script>
         let userHasAccess = false;
 
-        // Check access on page load - DON'T increment here
+        // Check access on page load - DON'T increment or redirect here
         (async function() {
             const freeUses = getFreeUses('pricing_generator');
             
@@ -329,7 +343,7 @@ White Label Option</textarea>
                     }
                 }
                 
-                // No access - block everything
+                // No access - show modal and disable tool, but DON'T redirect
                 showUpgradeModal('pricing_generator');
                 document.querySelectorAll('input, textarea, button').forEach(el => {
                     if (!el.closest('#upgrade-modal')) {
@@ -387,6 +401,7 @@ White Label Option</textarea>
                 const name = document.getElementById(`plan${i}-name`).value;
                 const price = document.getElementById(`plan${i}-price`).value;
                 const period = document.getElementById(`plan${i}-period`).value;
+                const buttonText = document.getElementById(`plan${i}-button`).value;
                 const features = document.getElementById(`plan${i}-features`).value.split('\n').filter(f => f.trim());
                 
                 html += `
@@ -396,7 +411,7 @@ White Label Option</textarea>
                         <ul>
                             ${features.map(f => `<li>${f}</li>`).join('')}
                         </ul>
-                        <a href="#" class="plan-btn">Get Started</a>
+                        <a href="#" class="plan-btn" onclick="return false;">${buttonText}</a>
                     </div>
                 `;
             }
