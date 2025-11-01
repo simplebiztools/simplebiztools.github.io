@@ -59,8 +59,14 @@ async function checkToolAccess(toolName) {
 
 // Show upgrade modal
 function showUpgradeModal(toolName, usesRemaining = null) {
+    // Remove any existing modals first
+    const existingModal = document.getElementById('upgrade-modal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+
     const modalHTML = `
-        <div id="upgrade-modal" onclick="if(event.target.id === 'upgrade-modal') this.remove()" style="
+        <div id="upgrade-modal" style="
             position: fixed;
             top: 0;
             left: 0;
@@ -71,15 +77,13 @@ function showUpgradeModal(toolName, usesRemaining = null) {
             align-items: center;
             justify-content: center;
             z-index: 10000;
-            cursor: pointer;
         ">
-            <div onclick="event.stopPropagation()" style="
+            <div id="modal-content" style="
                 background: white;
                 padding: 40px;
                 border-radius: 12px;
                 max-width: 500px;
                 text-align: center;
-                cursor: default;
                 position: relative;
             ">
                 <button onclick="document.getElementById('upgrade-modal').remove()" style="
@@ -137,6 +141,21 @@ function showUpgradeModal(toolName, usesRemaining = null) {
     `;
     
     document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+    // Add click listener to close on background click
+    setTimeout(() => {
+        const modal = document.getElementById('upgrade-modal');
+        const modalContent = document.getElementById('modal-content');
+        
+        if (modal && modalContent) {
+            modal.addEventListener('click', function(e) {
+                // Close if clicked outside modal content
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
+        }
+    }, 100);
 }
 
 // Add login/account button to header
