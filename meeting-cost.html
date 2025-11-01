@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Meeting Cost Calculator - SimpleBizTools</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="auth-check.js"></script>
     <style>
         .calculator-container {
             max-width: 800px;
@@ -244,6 +246,27 @@
     </footer>
 
     <script>
+        // Check access on page load
+        (async function() {
+            const access = await checkToolAccess('meeting_cost');
+            
+            if (!access.hasAccess) {
+                // Block access - show upgrade modal
+                showUpgradeModal('meeting_cost');
+                // Disable all form inputs
+                document.querySelectorAll('input, button').forEach(el => {
+                    if (!el.closest('#upgrade-modal')) {
+                        el.disabled = true;
+                    }
+                });
+            } else if (access.reason === 'free_trial' && access.usesRemaining !== undefined) {
+                // Show reminder about remaining uses
+                if (access.usesRemaining <= 1) {
+                    showUpgradeModal('meeting_cost', access.usesRemaining);
+                }
+            }
+        })();
+
         let meetingInterval = null;
         let startTime = null;
         let elapsedSeconds = 0;
