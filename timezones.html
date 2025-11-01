@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Team Timezone Converter - SimpleBizTools</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="auth-check.js"></script>
     <style>
         .timezone-container {
             max-width: 900px;
@@ -181,6 +183,27 @@
     </footer>
 
     <script>
+        // Check access on page load
+        (async function() {
+            const access = await checkToolAccess('timezone_converter');
+            
+            if (!access.hasAccess) {
+                // Block access - show upgrade modal
+                showUpgradeModal('timezone_converter');
+                // Disable all form inputs
+                document.querySelectorAll('input, select, button').forEach(el => {
+                    if (!el.closest('#upgrade-modal')) {
+                        el.disabled = true;
+                    }
+                });
+            } else if (access.reason === 'free_trial' && access.usesRemaining !== undefined) {
+                // Show reminder about remaining uses
+                if (access.usesRemaining <= 1) {
+                    showUpgradeModal('timezone_converter', access.usesRemaining);
+                }
+            }
+        })();
+
         function updateTimes() {
             // Update your time
             const now = new Date();
