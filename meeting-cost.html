@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meeting Cost Calculator - SimpleBizTools</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .calculator-container {
+            max-width: 800px;
+            margin: 40px auto;
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.07);
+        }
+
+        .attendee-list {
+            margin: 30px 0;
+        }
+
+        .attendee-item {
+            display: grid;
+            grid-template-columns: 2fr 2fr 1fr auto;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .attendee-item input {
+            padding: 10px;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 1em;
+        }
+
+        .attendee-item input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .remove-btn {
+            background: #fc8181;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .remove-btn:hover {
+            background: #f56565;
+        }
+
+        .add-attendee-btn {
+            width: 100%;
+            padding: 15px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 20px 0;
+        }
+
+        .add-attendee-btn:hover {
+            background: #5568d3;
+        }
+
+        .cost-display {
+            text-align: center;
+            padding: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            color: white;
+            margin: 30px 0;
+        }
+
+        .cost-display h2 {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            opacity: 0.9;
+        }
+
+        .cost-amount {
+            font-size: 4em;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+
+        .cost-details {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .cost-detail-item {
+            background: rgba(255,255,255,0.2);
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .cost-detail-item h4 {
+            font-size: 0.9em;
+            margin-bottom: 10px;
+            opacity: 0.9;
+        }
+
+        .cost-detail-item p {
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+
+        .meeting-controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin: 30px 0;
+        }
+
+        .meeting-controls button {
+            padding: 15px 40px;
+            font-size: 1.1em;
+            font-weight: 600;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .start-btn {
+            background: #48bb78;
+            color: white;
+        }
+
+        .start-btn:hover {
+            background: #38a169;
+        }
+
+        .stop-btn {
+            background: #fc8181;
+            color: white;
+        }
+
+        .stop-btn:hover {
+            background: #f56565;
+        }
+
+        .reset-btn {
+            background: #e2e8f0;
+            color: #2d3748;
+        }
+
+        .reset-btn:hover {
+            background: #cbd5e0;
+        }
+
+        .timer-display {
+            text-align: center;
+            font-size: 2em;
+            font-weight: bold;
+            color: #2d3748;
+            margin: 20px 0;
+        }
+
+        @media (max-width: 768px) {
+            .attendee-item {
+                grid-template-columns: 1fr;
+            }
+            .cost-details {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1><a href="index.html" style="color: white; text-decoration: none;">SimpleBizTools</a></h1>
+            <p class="tagline">Meeting Cost Calculator</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="hero">
+            <h2>Calculate Your Meeting Costs in Real-Time</h2>
+            <p>See exactly how much your meetings cost based on attendee salaries.</p>
+        </section>
+
+        <div class="calculator-container">
+            <h3>Add Meeting Attendees</h3>
+            
+            <div class="attendee-list" id="attendee-list">
+                <div class="attendee-item">
+                    <input type="text" placeholder="Name" class="attendee-name" value="John Smith">
+                    <input type="text" placeholder="Role" class="attendee-role" value="Senior Developer">
+                    <input type="number" placeholder="Salary ($)" class="attendee-salary" value="120000" oninput="updateCost()">
+                    <button class="remove-btn" onclick="removeAttendee(this)">Remove</button>
+                </div>
+            </div>
+
+            <button class="add-attendee-btn" onclick="addAttendee()">+ Add Attendee</button>
+
+            <div class="timer-display" id="timer">00:00:00</div>
+
+            <div class="meeting-controls">
+                <button class="start-btn" id="start-btn" onclick="startMeeting()">Start Meeting</button>
+                <button class="stop-btn" id="stop-btn" onclick="stopMeeting()" style="display: none;">Stop Meeting</button>
+                <button class="reset-btn" onclick="resetMeeting()">Reset</button>
+            </div>
+
+            <div class="cost-display">
+                <h2>Total Meeting Cost</h2>
+                <div class="cost-amount" id="total-cost">$0.00</div>
+                <div class="cost-details">
+                    <div class="cost-detail-item">
+                        <h4>Per Minute</h4>
+                        <p id="cost-per-minute">$0.00</p>
+                    </div>
+                    <div class="cost-detail-item">
+                        <h4>Attendees</h4>
+                        <p id="attendee-count">1</p>
+                    </div>
+                    <div class="cost-detail-item">
+                        <h4>Duration</h4>
+                        <p id="duration">0 min</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 SimpleBizTools. <a href="index.html" style="color: white;">Back to Home</a></p>
+        </div>
+    </footer>
+
+    <script>
+        let meetingInterval = null;
+        let startTime = null;
+        let elapsedSeconds = 0;
+
+        function addAttendee() {
+            const list = document.getElementById('attendee-list');
+            const item = document.createElement('div');
+            item.className = 'attendee-item';
+            item.innerHTML = `
+                <input type="text" placeholder="Name" class="attendee-name">
+                <input type="text" placeholder="Role" class="attendee-role">
+                <input type="number" placeholder="Salary ($)" class="attendee-salary" oninput="updateCost()">
+                <button class="remove-btn" onclick="removeAttendee(this)">Remove</button>
+            `;
+            list.appendChild(item);
+            updateCost();
+        }
+
+        function removeAttendee(btn) {
+            btn.parentElement.remove();
+            updateCost();
+        }
+
+        function updateCost() {
+            const salaries = Array.from(document.querySelectorAll('.attendee-salary'))
+                .map(input => parseFloat(input.value) || 0);
+            
+            const totalAnnualSalary = salaries.reduce((sum, salary) => sum + salary, 0);
+            const hourlyRate = totalAnnualSalary / 2080; // 52 weeks * 40 hours
+            const minuteRate = hourlyRate / 60;
+            
+            const minutes = Math.floor(elapsedSeconds / 60);
+            const totalCost = minuteRate * minutes;
+            
+            document.getElementById('total-cost').textContent = `$${totalCost.toFixed(2)}`;
+            document.getElementById('cost-per-minute').textContent = `$${minuteRate.toFixed(2)}`;
+            document.getElementById('attendee-count').textContent = salaries.length;
+            document.getElementById('duration').textContent = `${minutes} min`;
+        }
+
+        function startMeeting() {
+            if (meetingInterval) return;
+            
+            startTime = Date.now() - (elapsedSeconds * 1000);
+            document.getElementById('start-btn').style.display = 'none';
+            document.getElementById('stop-btn').style.display = 'inline-block';
+            
+            meetingInterval = setInterval(() => {
+                elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
+                
+                const hours = Math.floor(elapsedSeconds / 3600);
+                const minutes = Math.floor((elapsedSeconds % 3600) / 60);
+                const seconds = elapsedSeconds % 60;
+                
+                document.getElementById('timer').textContent = 
+                    `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                
+                updateCost();
+            }, 1000);
+        }
+
+        function stopMeeting() {
+            clearInterval(meetingInterval);
+            meetingInterval = null;
+            document.getElementById('start-btn').style.display = 'inline-block';
+            document.getElementById('stop-btn').style.display = 'none';
+        }
+
+        function resetMeeting() {
+            stopMeeting();
+            elapsedSeconds = 0;
+            document.getElementById('timer').textContent = '00:00:00';
+            updateCost();
+        }
+
+        // Initialize
+        updateCost();
+    </script>
+</body>
+</html>
