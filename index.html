@@ -133,11 +133,12 @@
         // Initialize Supabase
         const supabaseUrl = 'https://tbrafvmlpridqosgrosy.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRicmFmdm1scHJpZHFvc2dyb3N5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIwMDI1MjMsImV4cCI6MjA3NzU3ODUyM30.rIh2mIEDKBJqmiV8Q3U71_YCYM-WJ_4xcdx_bcQw1NU';
-        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+        const { createClient } = supabase;
+        const supabaseMain = createClient(supabaseUrl, supabaseKey);
 
         // Check if user is logged in and show/hide PayPal buttons
         async function initializePricing() {
-            const { data: { session } } = await supabase.auth.getSession();
+            const { data: { session } } = await supabaseMain.auth.getSession();
             
             if (!session) {
                 // Not logged in - show login notice
