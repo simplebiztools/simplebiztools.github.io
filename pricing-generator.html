@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pricing Table Generator - SimpleBizTools</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .generator-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-top: 40px;
+        }
+
+        .editor-panel {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.07);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 1em;
+            font-family: inherit;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .plan-editor {
+            border: 2px solid #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            background: #f8f9fa;
+        }
+
+        .preview-panel {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.07);
+            position: sticky;
+            top: 20px;
+        }
+
+        .pricing-preview {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+        }
+
+        .preview-card {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            flex: 1;
+            max-width: 300px;
+            transition: transform 0.3s ease;
+        }
+
+        .preview-card:hover {
+            transform: translateY(-5px);
+            border-color: #667eea;
+        }
+
+        .preview-card h3 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+            color: #2d3748;
+        }
+
+        .preview-card .plan-price {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #667eea;
+            margin: 20px 0;
+        }
+
+        .preview-card .plan-price span {
+            font-size: 0.4em;
+            color: #718096;
+        }
+
+        .preview-card ul {
+            list-style: none;
+            text-align: left;
+            margin: 20px 0;
+        }
+
+        .preview-card ul li {
+            padding: 8px 0;
+            color: #718096;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .preview-card ul li:before {
+            content: "✓ ";
+            color: #48bb78;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+
+        .preview-card .plan-btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            margin-top: 20px;
+        }
+
+        .action-buttons {
+            margin-top: 30px;
+            display: flex;
+            gap: 15px;
+        }
+
+        .action-buttons button {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #2d3748;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e0;
+        }
+
+        .watermark {
+            text-align: center;
+            margin-top: 20px;
+            padding: 15px;
+            background: #fff3cd;
+            border-radius: 6px;
+            color: #856404;
+        }
+
+        @media (max-width: 968px) {
+            .generator-container {
+                grid-template-columns: 1fr;
+            }
+            .pricing-preview {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1><a href="index.html" style="color: white; text-decoration: none;">SimpleBizTools</a></h1>
+            <p class="tagline">Pricing Table Generator</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="hero">
+            <h2>Create Beautiful Pricing Tables</h2>
+            <p>Design professional pricing tables in minutes. No coding required.</p>
+        </section>
+
+        <div class="generator-container">
+            <div class="editor-panel">
+                <h3>Customize Your Plans</h3>
+                
+                <div class="plan-editor">
+                    <h4>Plan 1</h4>
+                    <div class="form-group">
+                        <label>Plan Name</label>
+                        <input type="text" id="plan1-name" value="Basic" onkeyup="updatePreview()">
+                    </div>
+                    <div class="form-group">
+                        <label>Price</label>
+                        <input type="text" id="plan1-price" value="$19" onkeyup="updatePreview()">
+                    </div>
+                    <div class="form-group">
+                        <label>Billing Period</label>
+                        <input type="text" id="plan1-period" value="/month" onkeyup="updatePreview()">
+                    </div>
+                    <div class="form-group">
+                        <label>Features (one per line)</label>
+                        <textarea id="plan1-features" rows="4" onkeyup="updatePreview()">10 Projects
+Basic Support
+5GB Storage
+Email Integration</textarea>
+                    </div>
+                </div>
+
+                <div class="plan-editor">
+                    <h4>Plan 2</h4>
+                    <div class="form-group">
+                        <label>Plan Name</label>
+                        <input type="text" id="plan2-name" value="Pro" onkeyup="updatePreview()">
+                    </div>
+                    <div class="form-group">
+                        <label>Price</label>
+                        <input type="text" id="plan2-price" value="$49" onkeyup="updatePreview()">
+                    </div>
+                    <div class="form-group">
+                        <label>Billing Period</label>
+                        <input type="text" id="plan2-period" value="/month" onkeyup="updatePreview()">
+                    </div>
+                    <div class="form-group">
+                        <label>Features (one per line)</label>
+                        <textarea id="plan2-features" rows="4" onkeyup="updatePreview()">Unlimited Projects
+Priority Support
+50GB Storage
+Advanced Analytics</textarea>
+                    </div>
+                </div>
+
+                <div class="plan-editor">
+                    <h4>Plan 3</h4>
+                    <div class="form-group">
+                        <label>Plan Name</label>
+                        <input type="text" id="plan3-name" value="Enterprise" onkeyup="updatePreview()">
+                    </div>
+                    <div class="form-group">
+                        <label>Price</label>
+                        <input type="text" id="plan3-price" value="$99" onkeyup="updatePreview()">
+                    </div>
+                    <div class="form-group">
+                        <label>Billing Period</label>
+                        <input type="text" id="plan3-period" value="/month" onkeyup="updatePreview()">
+                    </div>
+                    <div class="form-group">
+                        <label>Features (one per line)</label>
+                        <textarea id="plan3-features" rows="4" onkeyup="updatePreview()">Everything in Pro
+Dedicated Support
+Unlimited Storage
+Custom Integrations
+White Label Option</textarea>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn-secondary" onclick="copyHTML()">Copy HTML</button>
+                    <button class="btn-primary" onclick="downloadHTML()">Download HTML</button>
+                </div>
+            </div>
+
+            <div class="preview-panel">
+                <h3>Live Preview</h3>
+                <div id="pricing-preview" class="pricing-preview">
+                    <!-- Preview will be generated here -->
+                </div>
+                <div class="watermark">
+                    <strong>🔒 Free Version</strong><br>
+                    Remove watermark for $10 - <a href="#" style="color: #667eea;">Upgrade Now</a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 SimpleBizTools. <a href="index.html" style="color: white;">Back to Home</a></p>
+        </div>
+    </footer>
+
+    <script>
+        function updatePreview() {
+            const preview = document.getElementById('pricing-preview');
+            
+            let html = '';
+            for (let i = 1; i <= 3; i++) {
+                const name = document.getElementById(`plan${i}-name`).value;
+                const price = document.getElementById(`plan${i}-price`).value;
+                const period = document.getElementById(`plan${i}-period`).value;
+                const features = document.getElementById(`plan${i}-features`).value.split('\n').filter(f => f.trim());
+                
+                html += `
+                    <div class="preview-card">
+                        <h3>${name}</h3>
+                        <div class="plan-price">${price}<span>${period}</span></div>
+                        <ul>
+                            ${features.map(f => `<li>${f}</li>`).join('')}
+                        </ul>
+                        <a href="#" class="plan-btn">Get Started</a>
+                    </div>
+                `;
+            }
+            
+            preview.innerHTML = html;
+        }
+
+        function copyHTML() {
+            const previewHTML = document.getElementById('pricing-preview').innerHTML;
+            const fullHTML = `
+<!-- Pricing Table Generated by SimpleBizTools.github.io -->
+<style>
+.pricing-preview { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
+.preview-card { background: white; border: 2px solid #e2e8f0; border-radius: 12px; padding: 30px; text-align: center; flex: 1; max-width: 300px; }
+.preview-card h3 { font-size: 1.5em; margin-bottom: 10px; color: #2d3748; }
+.preview-card .plan-price { font-size: 2.5em; font-weight: bold; color: #667eea; margin: 20px 0; }
+.preview-card .plan-price span { font-size: 0.4em; color: #718096; }
+.preview-card ul { list-style: none; text-align: left; margin: 20px 0; padding: 0; }
+.preview-card ul li { padding: 8px 0; color: #718096; border-bottom: 1px solid #e2e8f0; }
+.preview-card ul li:before { content: "✓ "; color: #48bb78; font-weight: bold; margin-right: 8px; }
+.preview-card .plan-btn { display: block; width: 100%; padding: 12px; background: #667eea; color: white; text-decoration: none; border-radius: 6px; font-weight: 600; margin-top: 20px; }
+</style>
+<div class="pricing-preview">
+${previewHTML}
+</div>
+<!-- Powered by SimpleBizTools.github.io -->
+            `;
+            
+            navigator.clipboard.writeText(fullHTML).then(() => {
+                alert('HTML copied to clipboard! Paste it into your website.');
+            });
+        }
+
+        function downloadHTML() {
+            const previewHTML = document.getElementById('pricing-preview').innerHTML;
+            const fullHTML = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pricing Table</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 40px; background: #f8f9fa; }
+        .pricing-preview { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; max-width: 1200px; margin: 0 auto; }
+        .preview-card { background: white; border: 2px solid #e2e8f0; border-radius: 12px; padding: 30px; text-align: center; flex: 1; max-width: 300px; }
+        .preview-card h3 { font-size: 1.5em; margin-bottom: 10px; color: #2d3748; }
+        .preview-card .plan-price { font-size: 2.5em; font-weight: bold; color: #667eea; margin: 20px 0; }
+        .preview-card .plan-price span { font-size: 0.4em; color: #718096; }
+        .preview-card ul { list-style: none; text-align: left; margin: 20px 0; padding: 0; }
+        .preview-card ul li { padding: 8px 0; color: #718096; border-bottom: 1px solid #e2e8f0; }
+        .preview-card ul li:before { content: "✓ "; color: #48bb78; font-weight: bold; margin-right: 8px; }
+        .preview-card .plan-btn { display: block; width: 100%; padding: 12px; background: #667eea; color: white; text-decoration: none; border-radius: 6px; font-weight: 600; margin-top: 20px; text-align: center; }
+        .watermark { text-align: center; margin-top: 40px; color: #718096; }
+    </style>
+</head>
+<body>
+    <div class="pricing-preview">
+${previewHTML}
+    </div>
+    <div class="watermark">
+        Created with SimpleBizTools.github.io
+    </div>
+</body>
+</html>
+            `;
+            
+            const blob = new Blob([fullHTML], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'pricing-table.html';
+            a.click();
+        }
+
+        // Initialize preview on load
+        updatePreview();
+    </script>
+</body>
+</html>
