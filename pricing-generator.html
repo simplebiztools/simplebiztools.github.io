@@ -306,48 +306,74 @@ White Label Option</textarea>
 
     <script>
         let userHasAccess = false;
-        let usesRemaining = 0;
 
-        // Check access on page load
+        // Check access on page load - DON'T increment here
         (async function() {
-            const access = await checkToolAccess('pricing_generator');
-            userHasAccess = access.hasAccess;
-            usesRemaining = access.usesRemaining || 0;
+            const freeUses = getFreeUses('pricing_generator');
             
-            if (!access.hasAccess) {
-                // Block access completely
+            if (freeUses >= 4) {
+                // Check if user has paid access
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                
+                if (session) {
+                    const { data: purchases } = await supabaseClient
+                        .from('user_purchases')
+                        .select('*')
+                        .eq('user_id', session.user.id)
+                        .eq('status', 'active')
+                        .or(`plan_type.eq.lifetime,plan_type.eq.full_suite,and(plan_type.eq.individual_tool,tool_name.eq.pricing_generator)`);
+                    
+                    if (purchases && purchases.length > 0) {
+                        userHasAccess = true;
+                        return;
+                    }
+                }
+                
+                // No access - block everything
                 showUpgradeModal('pricing_generator');
                 document.querySelectorAll('input, textarea, button').forEach(el => {
                     if (!el.closest('#upgrade-modal')) {
                         el.disabled = true;
                     }
                 });
-            } else if (access.reason === 'free_trial' && access.usesRemaining !== undefined) {
-                if (access.usesRemaining <= 1) {
-                    showUpgradeModal('pricing_generator', access.usesRemaining);
-                }
+            } else {
+                userHasAccess = true;
             }
         })();
 
-        async function checkActionAccess() {
-            // Check if user can perform action (copy/download)
-            const access = await checkToolAccess('pricing_generator');
+        async function checkAndIncrementUse() {
+            const freeUses = getFreeUses('pricing_generator');
             
-            if (!access.hasAccess) {
+            if (freeUses >= 4) {
+                // Check if user has paid access
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                
+                if (session) {
+                    const { data: purchases } = await supabaseClient
+                        .from('user_purchases')
+                        .select('*')
+                        .eq('user_id', session.user.id)
+                        .eq('status', 'active')
+                        .or(`plan_type.eq.lifetime,plan_type.eq.full_suite,and(plan_type.eq.individual_tool,tool_name.eq.pricing_generator)`);
+                    
+                    if (purchases && purchases.length > 0) {
+                        return true;
+                    }
+                }
+                
                 showUpgradeModal('pricing_generator');
                 return false;
             }
             
             // Increment use count
             incrementFreeUses('pricing_generator');
+            const newUses = getFreeUses('pricing_generator');
+            const remaining = 4 - newUses;
             
-            // Check again after increment
-            const newAccess = await checkToolAccess('pricing_generator');
-            if (!newAccess.hasAccess) {
-                showUpgradeModal('pricing_generator');
-                return false;
-            } else if (newAccess.usesRemaining !== undefined && newAccess.usesRemaining <= 1) {
-                showUpgradeModal('pricing_generator', newAccess.usesRemaining);
+            if (remaining <= 1 && remaining > 0) {
+                setTimeout(() => {
+                    showUpgradeModal('pricing_generator', remaining);
+                }, 500);
             }
             
             return true;
@@ -379,7 +405,7 @@ White Label Option</textarea>
         }
 
         async function copyHTML() {
-            const canProceed = await checkActionAccess();
+            const canProceed = await checkAndIncrementUse();
             if (!canProceed) return;
             
             const previewHTML = document.getElementById('pricing-preview').innerHTML;
@@ -408,7 +434,7 @@ ${previewHTML}
         }
 
         async function downloadHTML() {
-            const canProceed = await checkActionAccess();
+            const canProceed = await checkAndIncrementUse();
             if (!canProceed) return;
             
             const previewHTML = document.getElementById('pricing-preview').innerHTML;
