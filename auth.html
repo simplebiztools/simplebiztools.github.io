@@ -1,266 +1,10 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign In - SimpleBizTools</title>
-    <link rel="stylesheet" href="style.css">
-    <style>
-        .auth-container {
-            max-width: 450px;
-            margin: 60px auto;
-            background: white;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.07);
-        }
-
-        .auth-tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 30px;
-            border-bottom: 2px solid #e2e8f0;
-        }
-
-        .auth-tab {
-            flex: 1;
-            padding: 15px;
-            background: none;
-            border: none;
-            font-size: 1.1em;
-            font-weight: 600;
-            color: #718096;
-            cursor: pointer;
-            border-bottom: 3px solid transparent;
-            transition: all 0.3s ease;
-        }
-
-        .auth-tab.active {
-            color: #667eea;
-            border-bottom-color: #667eea;
-        }
-
-        .auth-form {
-            display: none;
-        }
-
-        .auth-form.active {
-            display: block;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #2d3748;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e2e8f0;
-            border-radius: 6px;
-            font-size: 1em;
-            transition: border-color 0.3s ease;
-        }
-
-        .form-group input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .auth-button {
-            width: 100%;
-            padding: 15px;
-            background: #667eea;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 1.1em;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.3s ease;
-        }
-
-        .auth-button:hover {
-            background: #5568d3;
-        }
-
-        .auth-button:disabled {
-            background: #cbd5e0;
-            cursor: not-allowed;
-        }
-
-        .google-button {
-            width: 100%;
-            padding: 15px;
-            background: white;
-            color: #2d3748;
-            border: 2px solid #e2e8f0;
-            border-radius: 6px;
-            font-size: 1.1em;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .google-button:hover {
-            border-color: #667eea;
-            background: #f7fafc;
-        }
-
-        .divider {
-            text-align: center;
-            margin: 25px 0;
-            position: relative;
-        }
-
-        .divider:before {
-            content: "";
-            position: absolute;
-            top: 50%;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: #e2e8f0;
-        }
-
-        .divider span {
-            background: white;
-            padding: 0 15px;
-            position: relative;
-            color: #718096;
-        }
-
-        .error-message {
-            background: #fed7d7;
-            color: #c53030;
-            padding: 12px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-            display: none;
-        }
-
-        .error-message.show {
-            display: block;
-        }
-
-        .success-message {
-            background: #c6f6d5;
-            color: #2f855a;
-            padding: 12px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-            display: none;
-        }
-
-        .success-message.show {
-            display: block;
-        }
-
-        .back-link {
-            text-align: center;
-            margin-top: 20px;
-        }
-
-        .back-link a {
-            color: #667eea;
-            text-decoration: none;
-        }
-
-        .back-link a:hover {
-            text-decoration: underline;
-        }
-    </style>
-</head>
-<body>
-    <header>
-        <div class="container">
-            <h1><a href="index.html" style="color: white; text-decoration: none;">SimpleBizTools</a></h1>
-            <p class="tagline">Sign in to access your tools</p>
-        </div>
-    </header>
-
-    <main class="container">
-        <div class="auth-container">
-            <div class="auth-tabs">
-                <button class="auth-tab active" onclick="switchTab('login')">Sign In</button>
-                <button class="auth-tab" onclick="switchTab('signup')">Sign Up</button>
-            </div>
-
-            <div id="error-message" class="error-message"></div>
-            <div id="success-message" class="success-message"></div>
-
-            <!-- Google Sign In Button (shown for both tabs) -->
-            <button class="google-button" onclick="signInWithGoogle()">
-                <svg width="20" height="20" viewBox="0 0 20 20">
-                    <path fill="#4285F4" d="M19.6 10.23c0-.82-.1-1.42-.25-2.05H10v3.72h5.5c-.15.96-.74 2.31-2.04 3.22v2.45h3.16c1.89-1.73 2.98-4.3 2.98-7.34z"/>
-                    <path fill="#34A853" d="M13.46 15.13c-.83.59-1.96 1-3.46 1-2.64 0-4.88-1.74-5.68-4.15H1.07v2.52C2.72 17.75 6.09 20 10 20c2.7 0 4.96-.89 6.62-2.42l-3.16-2.45z"/>
-                    <path fill="#FBBC05" d="M3.99 10c0-.69.12-1.35.32-1.97V5.51H1.07A9.973 9.973 0 000 10c0 1.61.39 3.14 1.07 4.49l3.24-2.52c-.2-.62-.32-1.28-.32-1.97z"/>
-                    <path fill="#EA4335" d="M10 3.88c1.88 0 3.13.81 3.85 1.48l2.84-2.76C14.96.99 12.7 0 10 0 6.09 0 2.72 2.25 1.07 5.51l3.24 2.52C5.12 5.62 7.36 3.88 10 3.88z"/>
-                </svg>
-                Continue with Google
-            </button>
-
-            <div class="divider"><span>OR</span></div>
-
-            <!-- Login Form -->
-            <form id="login-form" class="auth-form active" onsubmit="handleLogin(event)">
-                <div class="form-group">
-                    <label>Email</label>
-                    <input type="email" id="login-email" required>
-                </div>
-                <div class="form-group">
-                    <label>Password</label>
-                    <input type="password" id="login-password" required>
-                </div>
-                <button type="submit" class="auth-button" id="login-button">Sign In</button>
-            </form>
-
-            <!-- Signup Form -->
-            <form id="signup-form" class="auth-form" onsubmit="handleSignup(event)">
-                <div class="form-group">
-                    <label>Full Name</label>
-                    <input type="text" id="signup-name" required>
-                </div>
-                <div class="form-group">
-                    <label>Email</label>
-                    <input type="email" id="signup-email" required>
-                </div>
-                <div class="form-group">
-                    <label>Password</label>
-                    <input type="password" id="signup-password" minlength="6" required>
-                </div>
-                <button type="submit" class="auth-button" id="signup-button">Create Account</button>
-            </form>
-
-            <div class="back-link">
-                <a href="index.html">← Back to Home</a>
-            </div>
-        </div>
-    </main>
-
-    <footer>
-        <div class="container">
-            <p>&copy; 2024 SimpleBizTools. Built for businesses who value simplicity.</p>
-        </div>
-    </footer>
-
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         // Initialize Supabase
         const supabaseUrl = 'https://tbrafvmlpridqosgrosy.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRicmFmdm1scHJpZHFvc2dyb3N5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIwMDI1MjMsImV4cCI6MjA3NzU3ODUyM30.rIh2mIEDKBJqmiV8Q3U71_YCYM-WJ_4xcdx_bcQw1NU';
-        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+        const { createClient } = supabase;
+        const supabaseAuth = createClient(supabaseUrl, supabaseKey);
 
         function switchTab(tab) {
             // Update tabs
@@ -301,7 +45,7 @@
         async function signInWithGoogle() {
             hideMessages();
             try {
-                const { data, error } = await supabase.auth.signInWithOAuth({
+                const { data, error } = await supabaseAuth.auth.signInWithOAuth({
                     provider: 'google',
                     options: {
                         redirectTo: window.location.origin + '/index.html'
@@ -327,7 +71,7 @@
             button.textContent = 'Signing in...';
             
             try {
-                const { data, error } = await supabase.auth.signInWithPassword({
+                const { data, error } = await supabaseAuth.auth.signInWithPassword({
                     email: email,
                     password: password
                 });
@@ -359,7 +103,7 @@
             button.textContent = 'Creating account...';
             
             try {
-                const { data, error } = await supabase.auth.signUp({
+                const { data, error } = await supabaseAuth.auth.signUp({
                     email: email,
                     password: password,
                     options: {
@@ -384,11 +128,9 @@
         }
 
         // Check if already logged in
-        supabase.auth.getSession().then(({ data: { session } }) => {
+        supabaseAuth.auth.getSession().then(({ data: { session } }) => {
             if (session) {
                 window.location.href = 'index.html#pricing';
             }
         });
     </script>
-</body>
-</html>
