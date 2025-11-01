@@ -305,7 +305,7 @@
                 const { data, error } = await supabaseAuth.auth.signInWithOAuth({
                     provider: 'google',
                     options: {
-                        redirectTo: window.location.origin + '/index.html'
+                        redirectTo: 'https://simplebiztools.github.io/index.html'
                     }
                 });
                 
@@ -367,7 +367,7 @@
                         data: {
                             full_name: name
                         },
-                        emailRedirectTo: window.location.origin + '/index.html#pricing'
+                        emailRedirectTo: 'https://simplebiztools.github.io/index.html#pricing'
                     }
                 });
                 
