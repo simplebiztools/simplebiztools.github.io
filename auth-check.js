@@ -166,14 +166,23 @@ async function addAuthButton() {
     if (!header) return;
     
     const authButton = document.createElement('div');
-    authButton.style.cssText = 'position: absolute; top: 20px; right: 20px;';
+    authButton.style.cssText = 'position: absolute; top: 20px; right: 20px; display: flex; gap: 10px;';
     
     if (session) {
         authButton.innerHTML = `
-            <button onclick="handleLogout()" style="
+            <a href="account.html" style="
                 padding: 10px 20px;
                 background: white;
                 color: #667eea;
+                border: 2px solid white;
+                border-radius: 6px;
+                font-weight: 600;
+                text-decoration: none;
+            ">My Account</a>
+            <button onclick="handleLogout()" style="
+                padding: 10px 20px;
+                background: transparent;
+                color: white;
                 border: 2px solid white;
                 border-radius: 6px;
                 font-weight: 600;
