@@ -73,9 +73,9 @@
 
             <!-- Email Match Warning (shown when logged in) -->
             <div id="email-warning" style="display: none; background: #e6f7ff; padding: 20px; border-radius: 8px; margin-bottom: 30px; text-align: center; border: 2px solid #1890ff;">
-                <h3 style="color: #0050b3; margin-bottom: 10px;">⚠️ Important: Use Your Account Email</h3>
+                <h3 style="color: #0050b3; margin-bottom: 10px;">⚠️ Important: Use Your Account Email with PayPal</h3>
                 <p style="color: #0050b3; margin-bottom: 10px;">You're signed in as: <strong id="user-email-display"></strong></p>
-                <p style="color: #0050b3;">Please use this SAME email when paying with PayPal to ensure instant access to your tools.</p>
+                <p style="color: #0050b3; font-weight: bold;">Please use this SAME email when paying with PayPal to ensure instant access to your tools.</p>
             </div>
 
             <div class="pricing-options">
@@ -120,6 +120,15 @@
                 </div>
             </div>
         </section>
+
+        <section id="contact" class="pricing-section" style="margin-top: 80px;">
+            <h2>Contact Us</h2>
+            <div style="max-width: 600px; margin: 40px auto; text-align: center; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.07);">
+                <p style="color: #718096; font-size: 1.2em; margin-bottom: 30px;">Have questions? Need help? We're here for you!</p>
+                <a href="mailto:SimpleBizTools101@gmail.com" style="display: inline-block; padding: 15px 40px; background: #667eea; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 1.1em;">📧 Email Us</a>
+                <p style="color: #718096; margin-top: 20px;">SimpleBizTools101@gmail.com</p>
+            </div>
+        </section>
     </main>
 
     <footer>
@@ -130,32 +139,36 @@
 
     <script src="https://www.paypal.com/sdk/js?client-id=AVT7yA-Ol5ZAxDc686NxPz-YI_ajoNpxJv4z3v1mCjUQBoWeNsTtCdkfX4gvtHoAUsH3iz4vxWxHWD-u&vault=true&intent=subscription" data-sdk-integration-source="button-factory"></script>
     <script>
-        // Initialize Supabase
-        const supabaseUrl = 'https://tbrafvmlpridqosgrosy.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRicmFmdm1scHJpZHFvc2dyb3N5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIwMDI1MjMsImV4cCI6MjA3NzU3ODUyM30.rIh2mIEDKBJqmiV8Q3U71_YCYM-WJ_4xcdx_bcQw1NU';
-        const { createClient } = supabase;
-        const supabaseMain = createClient(supabaseUrl, supabaseKey);
-
+        // Use existing supabaseClient from auth-check.js
         // Check if user is logged in and show/hide PayPal buttons
         async function initializePricing() {
-            const { data: { session } } = await supabaseMain.auth.getSession();
+            console.log('Initializing pricing...');
+            const { data: { session }, error } = await supabaseClient.auth.getSession();
+            
+            console.log('Session:', session);
+            console.log('Error:', error);
             
             if (!session) {
                 // Not logged in - show login notice
+                console.log('Not logged in');
                 document.getElementById('login-notice').style.display = 'block';
                 document.getElementById('email-warning').style.display = 'none';
             } else {
                 // Logged in - show email warning and PayPal buttons
+                console.log('Logged in as:', session.user.email);
                 document.getElementById('login-notice').style.display = 'none';
                 document.getElementById('email-warning').style.display = 'block';
                 document.getElementById('user-email-display').textContent = session.user.email;
                 
                 // Render PayPal buttons with pre-filled email
+                console.log('Rendering PayPal buttons...');
                 renderPayPalButtons(session.user.email);
             }
         }
 
         function renderPayPalButtons(userEmail) {
+            console.log('Rendering buttons for:', userEmail);
+            
             // Individual Tool Subscription Button ($14.99)
             paypal.Buttons({
                 style: {
@@ -176,7 +189,11 @@
                     alert('Thanks for subscribing! Your access will be activated shortly. Please check your email.');
                     window.location.reload();
                 }
-            }).render('#individual-paypal-container');
+            }).render('#individual-paypal-container').then(() => {
+                console.log('Individual button rendered');
+            }).catch((err) => {
+                console.error('Individual button error:', err);
+            });
 
             // Full Suite Subscription Button ($39.99)
             paypal.Buttons({
@@ -198,7 +215,11 @@
                     alert('Thanks for subscribing! Your access will be activated shortly. Please check your email.');
                     window.location.reload();
                 }
-            }).render('#fullsuite-paypal-container');
+            }).render('#fullsuite-paypal-container').then(() => {
+                console.log('Full suite button rendered');
+            }).catch((err) => {
+                console.error('Full suite button error:', err);
+            });
 
             // Lifetime Deal Button ($299)
             const lifetimeContainer = document.getElementById('lifetime-paypal-container');
@@ -210,10 +231,22 @@
                    Buy Lifetime Access
                 </a>
             `;
+            console.log('Lifetime button rendered');
         }
 
         // Initialize on page load
-        document.addEventListener('DOMContentLoaded', initializePricing);
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM loaded, initializing...');
+            initializePricing();
+        });
+
+        // Also listen for auth state changes
+        supabaseClient.auth.onAuthStateChange((event, session) => {
+            console.log('Auth state changed:', event, session);
+            if (event === 'SIGNED_IN') {
+                initializePricing();
+            }
+        });
     </script>
 </body>
 </html>
