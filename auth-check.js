@@ -160,15 +160,31 @@ function showUpgradeModal(toolName, usesRemaining = null) {
 
 // Add login/account button to header
 async function addAuthButton() {
-    const { data: { session } } = await supabaseClient.auth.getSession();
+    console.log('addAuthButton called');
+    
+    const { data: { session }, error } = await supabaseClient.auth.getSession();
+    
+    console.log('Session check:', session);
+    console.log('Error:', error);
     
     const header = document.querySelector('header .container');
-    if (!header) return;
+    if (!header) {
+        console.log('Header not found');
+        return;
+    }
+    
+    // Remove existing auth button if present
+    const existingAuthButton = header.querySelector('.auth-button-container');
+    if (existingAuthButton) {
+        existingAuthButton.remove();
+    }
     
     const authButton = document.createElement('div');
-    authButton.style.cssText = 'position: absolute; top: 20px; right: 20px; display: flex; gap: 10px;';
+    authButton.className = 'auth-button-container';
+    authButton.style.cssText = 'position: absolute; top: 20px; right: 20px; display: flex; gap: 10px; z-index: 1000;';
     
     if (session) {
+        console.log('User is logged in, showing account buttons');
         authButton.innerHTML = `
             <a href="account.html" style="
                 padding: 10px 20px;
@@ -178,6 +194,7 @@ async function addAuthButton() {
                 border-radius: 6px;
                 font-weight: 600;
                 text-decoration: none;
+                display: inline-block;
             ">My Account</a>
             <button onclick="handleLogout()" style="
                 padding: 10px 20px;
@@ -190,6 +207,7 @@ async function addAuthButton() {
             ">Sign Out</button>
         `;
     } else {
+        console.log('User is not logged in, showing sign in button');
         authButton.innerHTML = `
             <a href="auth.html" style="
                 padding: 10px 20px;
@@ -206,6 +224,7 @@ async function addAuthButton() {
     
     header.style.position = 'relative';
     header.appendChild(authButton);
+    console.log('Auth button added to header');
 }
 
 async function handleLogout() {
@@ -214,4 +233,15 @@ async function handleLogout() {
 }
 
 // Initialize auth button on page load
-document.addEventListener('DOMContentLoaded', addAuthButton);
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM loaded, calling addAuthButton');
+    setTimeout(addAuthButton, 100);
+});
+
+// Also listen for auth state changes
+supabaseClient.auth.onAuthStateChange((event, session) => {
+    console.log('Auth state changed:', event);
+    if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+        setTimeout(addAuthButton, 100);
+    }
+});
