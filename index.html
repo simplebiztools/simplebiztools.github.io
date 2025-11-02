@@ -194,7 +194,7 @@
             document.getElementById('individual-paypal-container').innerHTML = '';
             document.getElementById('fullsuite-paypal-container').innerHTML = '';
             
-            // Individual Tool Subscription Button ($14.99)
+            // Individual Tool Subscription Button ($0.01 for testing)
             paypal.Buttons({
                 style: {
                     shape: 'pill',
@@ -211,8 +211,26 @@
                     });
                 },
                 onApprove: function(data, actions) {
-                    alert('Thanks for subscribing! Your access will be activated shortly. Please check your email.');
-                    window.location.reload();
+                    // Hide all PayPal buttons immediately to prevent double-purchase
+                    document.getElementById('individual-paypal-container').innerHTML = '<p style="color: #48bb78; font-weight: 600; text-align: center; padding: 20px;">✓ Processing your subscription...</p>';
+                    document.getElementById('fullsuite-paypal-container').innerHTML = '<p style="color: #48bb78; font-weight: 600; text-align: center; padding: 20px;">✓ Processing...</p>';
+                    document.getElementById('lifetime-paypal-container').innerHTML = '<p style="color: #48bb78; font-weight: 600; text-align: center; padding: 20px;">✓ Processing...</p>';
+                    
+                    // Show success message after brief delay
+                    setTimeout(() => {
+                        alert('✅ Subscription successful! Your access is being activated. The page will refresh in a moment.');
+                        // Reload after another 3 seconds to give webhook time to process
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 3000);
+                    }, 2000);
+                },
+                onCancel: function(data) {
+                    console.log('User cancelled subscription');
+                },
+                onError: function(err) {
+                    console.error('PayPal error:', err);
+                    alert('There was an error processing your subscription. Please try again or contact support.');
                 }
             }).render('#individual-paypal-container').then(() => {
                 console.log('Individual button rendered');
@@ -237,8 +255,26 @@
                     });
                 },
                 onApprove: function(data, actions) {
-                    alert('Thanks for subscribing! Your access will be activated shortly. Please check your email.');
-                    window.location.reload();
+                    // Hide all PayPal buttons immediately to prevent double-purchase
+                    document.getElementById('individual-paypal-container').innerHTML = '<p style="color: #48bb78; font-weight: 600; text-align: center; padding: 20px;">✓ Processing...</p>';
+                    document.getElementById('fullsuite-paypal-container').innerHTML = '<p style="color: #48bb78; font-weight: 600; text-align: center; padding: 20px;">✓ Processing your subscription...</p>';
+                    document.getElementById('lifetime-paypal-container').innerHTML = '<p style="color: #48bb78; font-weight: 600; text-align: center; padding: 20px;">✓ Processing...</p>';
+                    
+                    // Show success message after brief delay
+                    setTimeout(() => {
+                        alert('✅ Subscription successful! Your access is being activated. The page will refresh in a moment.');
+                        // Reload after another 3 seconds to give webhook time to process
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 3000);
+                    }, 2000);
+                },
+                onCancel: function(data) {
+                    console.log('User cancelled subscription');
+                },
+                onError: function(err) {
+                    console.error('PayPal error:', err);
+                    alert('There was an error processing your subscription. Please try again or contact support.');
                 }
             }).render('#fullsuite-paypal-container').then(() => {
                 console.log('Full suite button rendered');
@@ -252,11 +288,21 @@
                 <a href="https://www.paypal.com/ncp/payment/K53FU4G4SCYBN" 
                    class="btn btn-primary" 
                    target="_blank" 
+                   onclick="handleLifetimePurchase()"
                    style="display: inline-block; margin-top: 20px; padding: 15px 30px; background: #667eea; color: white; text-decoration: none; border-radius: 8px; font-weight: 600;">
                    Buy Lifetime Access
                 </a>
             `;
             console.log('Lifetime button rendered');
+        }
+
+        function handleLifetimePurchase() {
+            // Hide all buttons when lifetime is clicked
+            setTimeout(() => {
+                document.getElementById('individual-paypal-container').innerHTML = '<p style="color: #48bb78; font-weight: 600; text-align: center; padding: 20px;">✓ Processing...</p>';
+                document.getElementById('fullsuite-paypal-container').innerHTML = '<p style="color: #48bb78; font-weight: 600; text-align: center; padding: 20px;">✓ Processing...</p>';
+                document.getElementById('lifetime-paypal-container').innerHTML = '<p style="color: #48bb78; font-weight: 600; text-align: center; padding: 20px;">✓ Opening PayPal...</p>';
+            }, 100);
         }
 
         // Initialize on page load
