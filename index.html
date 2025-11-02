@@ -87,6 +87,18 @@
                         <li>Unlimited usage</li>
                         <li>Email support</li>
                     </ul>
+                    
+                    <!-- Tool Selection Dropdown -->
+                    <div id="tool-selection" style="margin: 20px 0; display: none;">
+                        <label style="display: block; margin-bottom: 10px; font-weight: 600; color: #2d3748;">Select Your Tool:</label>
+                        <select id="selected-tool" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 1em;">
+                            <option value="">Choose a tool...</option>
+                            <option value="pricing_generator">📊 Pricing Table Generator</option>
+                            <option value="meeting_cost">💰 Meeting Cost Calculator</option>
+                            <option value="timezone_converter">🌍 Team Timezone Converter</option>
+                        </select>
+                    </div>
+                    
                     <div id="individual-paypal-container" style="margin-top: 20px; min-height: 150px;">
                         <p id="individual-signin-msg" style="display: none; color: #856404; background: #fff3cd; padding: 15px; border-radius: 6px; text-align: center; font-weight: 600;">
                             Please <a href="auth.html" style="color: #667eea; text-decoration: underline;">sign in</a> to purchase this plan
@@ -146,6 +158,7 @@
     <script src="https://www.paypal.com/sdk/js?client-id=AVT7yA-Ol5ZAxDc686NxPz-YI_ajoNpxJv4z3v1mCjUQBoWeNsTtCdkfX4gvtHoAUsH3iz4vxWxHWD-u&vault=true&intent=subscription" data-sdk-integration-source="button-factory"></script>
     <script>
         let buttonsRendered = false;
+        let selectedToolName = '';
 
         // Use existing supabaseClient from auth-check.js
         // Check if user is logged in and show/hide PayPal buttons
@@ -180,6 +193,9 @@
                 document.getElementById('fullsuite-signin-msg').style.display = 'none';
                 document.getElementById('lifetime-signin-msg').style.display = 'none';
                 
+                // Show tool selection dropdown for individual plan
+                document.getElementById('tool-selection').style.display = 'block';
+                
                 // Render PayPal buttons with pre-filled email
                 console.log('Rendering PayPal buttons...');
                 renderPayPalButtons(session.user.email);
@@ -194,49 +210,92 @@
             document.getElementById('individual-paypal-container').innerHTML = '';
             document.getElementById('fullsuite-paypal-container').innerHTML = '';
             
-            // Individual Tool Subscription Button ($0.01 for testing)
-            paypal.Buttons({
-                style: {
-                    shape: 'pill',
-                    color: 'gold',
-                    layout: 'vertical',
-                    label: 'subscribe'
-                },
-                createSubscription: function(data, actions) {
-                    return actions.subscription.create({
-                        plan_id: 'P-9M74147901295574ENEDFVNA',
-                        subscriber: {
-                            email_address: userEmail
-                        }
-                    });
-                },
-                onApprove: function(data, actions) {
-                    // Hide all PayPal buttons immediately to prevent double-purchase
-                    document.getElementById('individual-paypal-container').innerHTML = '<p style="color: #48bb78; font-weight: 600; text-align: center; padding: 20px;">✓ Processing your subscription...</p>';
-                    document.getElementById('fullsuite-paypal-container').innerHTML = '<p style="color: #48bb78; font-weight: 600; text-align: center; padding: 20px;">✓ Processing...</p>';
-                    document.getElementById('lifetime-paypal-container').innerHTML = '<p style="color: #48bb78; font-weight: 600; text-align: center; padding: 20px;">✓ Processing...</p>';
-                    
-                    // Show success message after brief delay
-                    setTimeout(() => {
-                        alert('✅ Subscription successful! Your access is being activated. The page will refresh in a moment.');
-                        // Reload after another 3 seconds to give webhook time to process
-                        setTimeout(() => {
-                            window.location.reload();
-                        }, 3000);
-                    }, 2000);
-                },
-                onCancel: function(data) {
-                    console.log('User cancelled subscription');
-                },
-                onError: function(err) {
-                    console.error('PayPal error:', err);
-                    alert('There was an error processing your subscription. Please try again or contact support.');
+            // Show tool selection
+            const toolSelectionHTML = `
+                <div style="margin: 20px 0;">
+                    <label style="display: block; margin-bottom: 10px; font-weight: 600; color: #2d3748;">Select Your Tool:</label>
+                    <select id="selected-tool" onchange="updateSelectedTool()" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 1em; margin-bottom: 15px;">
+                        <option value="">Choose a tool...</option>
+                        <option value="pricing_generator">📊 Pricing Table Generator</option>
+                        <option value="meeting_cost">💰 Meeting Cost Calculator</option>
+                        <option value="timezone_converter">🌍 Team Timezone Converter</option>
+                    </select>
+                </div>
+                <div id="individual-button-container"></div>
+            `;
+            
+            document.getElementById('individual-paypal-container').innerHTML = toolSelectionHTML;
+            
+            // Individual Tool Subscription Button ($0.01 for testing) - Initially hidden
+            function renderIndividualButton() {
+                const selectedTool = document.getElementById('selected-tool').value;
+                
+                if (!selectedTool) {
+                    document.getElementById('individual-button-container').innerHTML = '<p style="color: #718096; text-align: center; padding: 20px;">Please select a tool above</p>';
+                    return;
                 }
-            }).render('#individual-paypal-container').then(() => {
-                console.log('Individual button rendered');
-            }).catch((err) => {
-                console.error('Individual button error:', err);
-            });
+                
+                document.getElementById('individual-button-container').innerHTML = '';
+                
+                paypal.Buttons({
+                    style: {
+                        shape: 'pill',
+                        color: 'gold',
+                        layout: 'vertical',
+                        label: 'subscribe'
+                    },
+                    createSubscription: function(data, actions) {
+                        return actions.subscription.create({
+                            plan_id: 'P-9M74147901295574ENEDFVNA',
+                            subscriber: {
+                                email_address: userEmail
+                            },
+                            custom_id: selectedTool // Pass the selected tool
+                        });
+                    },
+                    onApprove: function(data, actions) {
+                        // Store selected tool in localStorage for webhook to pick up
+                        localStorage.setItem('pending_tool_subscription', JSON.stringify({
+                            email: userEmail,
+                            tool: selectedTool,
+                            subscription_id: data.subscriptionID
+                        }));
+                        
+                        // Hide all PayPal buttons immediately to prevent double-purchase
+                        document.getElementById('individual-paypal-container').innerHTML = '<p style="color: #48bb78; font-weight: 600; text-align: center; padding: 20px;">✓ Processing your subscription...</p>';
+                        document.getElementById('fullsuite-paypal-container').innerHTML = '<p style="color: #48bb78; font-weight: 600; text-align: center; padding: 20px;">✓ Processing...</p>';
+                        document.getElementById('lifetime-paypal-container').innerHTML = '<p style="color: #48bb78; font-weight: 600; text-align: center; padding: 20px;">✓ Processing...</p>';
+                        
+                        // Show success message after brief delay
+                        setTimeout(() => {
+                            alert('✅ Subscription successful! Your access to ' + getToolName(selectedTool) + ' is being activated. The page will refresh in a moment.');
+                            // Reload after another 3 seconds to give webhook time to process
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 3000);
+                        }, 2000);
+                    },
+                    onCancel: function(data) {
+                        console.log('User cancelled subscription');
+                    },
+                    onError: function(err) {
+                        console.error('PayPal error:', err);
+                        alert('There was an error processing your subscription. Please try again or contact support.');
+                    }
+                }).render('#individual-button-container').then(() => {
+                    console.log('Individual button rendered');
+                }).catch((err) => {
+                    console.error('Individual button error:', err);
+                });
+            }
+            
+            // Listen for tool selection changes
+            window.updateSelectedTool = function() {
+                renderIndividualButton();
+            };
+            
+            // Initial render
+            renderIndividualButton();
 
             // Full Suite Subscription Button ($39.99)
             paypal.Buttons({
@@ -294,6 +353,15 @@
                 </a>
             `;
             console.log('Lifetime button rendered');
+        }
+
+        function getToolName(toolValue) {
+            const toolNames = {
+                'pricing_generator': 'Pricing Table Generator',
+                'meeting_cost': 'Meeting Cost Calculator',
+                'timezone_converter': 'Team Timezone Converter'
+            };
+            return toolNames[toolValue] || 'Unknown Tool';
         }
 
         function handleLifetimePurchase() {
