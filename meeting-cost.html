@@ -241,31 +241,84 @@
 
     <footer>
         <div class="container">
-            <p>&copy; 2024 SimpleBizTools. <a href="index.html" style="color: white;">Back to Home</a></p>
+            <p>&copy; 2025 SimpleBizTools. <a href="index.html" style="color: white;">Back to Home</a></p>
         </div>
     </footer>
 
     <script>
-        // Check access on page load
+        let userHasAccess = false;
+
+        // Check access on page load - DON'T increment or redirect here
         (async function() {
-            const access = await checkToolAccess('meeting_cost');
+            const freeUses = getFreeUses('meeting_cost');
             
-            if (!access.hasAccess) {
-                // Block access - show upgrade modal
+            if (freeUses >= 4) {
+                // Check if user has paid access
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                
+                if (session) {
+                    const { data: purchases } = await supabaseClient
+                        .from('user_purchases')
+                        .select('*')
+                        .eq('user_id', session.user.id)
+                        .eq('status', 'active')
+                        .or(`plan_type.eq.lifetime,plan_type.eq.full_suite,and(plan_type.eq.individual_tool,tool_name.eq.meeting_cost)`);
+                    
+                    if (purchases && purchases.length > 0) {
+                        userHasAccess = true;
+                        return;
+                    }
+                }
+                
+                // No access - show modal and disable tool
                 showUpgradeModal('meeting_cost');
-                // Disable all form inputs
                 document.querySelectorAll('input, button').forEach(el => {
                     if (!el.closest('#upgrade-modal')) {
                         el.disabled = true;
                     }
                 });
-            } else if (access.reason === 'free_trial' && access.usesRemaining !== undefined) {
-                // Show reminder about remaining uses
-                if (access.usesRemaining <= 1) {
-                    showUpgradeModal('meeting_cost', access.usesRemaining);
-                }
+            } else {
+                userHasAccess = true;
             }
         })();
+
+        async function checkAndIncrementUse() {
+            const freeUses = getFreeUses('meeting_cost');
+            
+            if (freeUses >= 4) {
+                // Check if user has paid access
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                
+                if (session) {
+                    const { data: purchases } = await supabaseClient
+                        .from('user_purchases')
+                        .select('*')
+                        .eq('user_id', session.user.id)
+                        .eq('status', 'active')
+                        .or(`plan_type.eq.lifetime,plan_type.eq.full_suite,and(plan_type.eq.individual_tool,tool_name.eq.meeting_cost)`);
+                    
+                    if (purchases && purchases.length > 0) {
+                        return true;
+                    }
+                }
+                
+                showUpgradeModal('meeting_cost');
+                return false;
+            }
+            
+            // Increment use count
+            incrementFreeUses('meeting_cost');
+            const newUses = getFreeUses('meeting_cost');
+            const remaining = 4 - newUses;
+            
+            if (remaining <= 1 && remaining > 0) {
+                setTimeout(() => {
+                    showUpgradeModal('meeting_cost', remaining);
+                }, 500);
+            }
+            
+            return true;
+        }
 
         let meetingInterval = null;
         let startTime = null;
@@ -307,7 +360,11 @@
             document.getElementById('duration').textContent = `${minutes} min`;
         }
 
-        function startMeeting() {
+        async function startMeeting() {
+            // Check access when starting meeting
+            const canProceed = await checkAndIncrementUse();
+            if (!canProceed) return;
+            
             if (meetingInterval) return;
             
             startTime = Date.now() - (elapsedSeconds * 1000);
