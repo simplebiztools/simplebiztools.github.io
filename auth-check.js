@@ -22,23 +22,47 @@ async function checkToolAccess(toolName) {
         const { data: { session } } = await supabaseClient.auth.getSession();
         
         if (session) {
-            // User is logged in - check if they have purchased access
+            console.log('User logged in, checking database for access...');
+            
+            // Query database for active subscriptions
             const { data: purchases, error } = await supabaseClient
                 .from('user_purchases')
                 .select('*')
-                .eq('user_id', session.user.id)
-                .eq('status', 'active')
-                .or(`plan_type.eq.lifetime,plan_type.eq.full_suite,and(plan_type.eq.individual_tool,tool_name.eq.${toolName})`);
+                .eq('email', session.user.email)
+                .eq('status', 'active');
             
-            if (error) throw error;
+            if (error) {
+                console.error('Error checking purchases:', error);
+            } else {
+                console.log('Found purchases:', purchases);
+            }
             
             if (purchases && purchases.length > 0) {
-                return { hasAccess: true, reason: 'paid' };
+                // Check if user has lifetime or full_suite access
+                const hasFullAccess = purchases.some(p => 
+                    p.plan_type === 'lifetime' || p.plan_type === 'full_suite'
+                );
+                
+                if (hasFullAccess) {
+                    console.log('User has full access (lifetime or full suite)');
+                    return { hasAccess: true, reason: 'paid' };
+                }
+                
+                // Check if user has individual tool access
+                const hasToolAccess = purchases.some(p => 
+                    p.plan_type === 'individual_tool' && p.tool_name === toolName
+                );
+                
+                if (hasToolAccess) {
+                    console.log('User has individual tool access for:', toolName);
+                    return { hasAccess: true, reason: 'paid' };
+                }
             }
         }
         
         // User not logged in or no purchase - check free uses
         const freeUses = getFreeUses(toolName);
+        console.log('Free uses for', toolName, ':', freeUses);
         
         if (freeUses < 4) {
             return { 
