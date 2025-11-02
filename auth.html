@@ -251,7 +251,7 @@
 
     <footer>
         <div class="container">
-            <p>&copy; 2024 SimpleBizTools. Built for businesses who value simplicity.</p>
+            <p>&copy; 2025 SimpleBizTools. Built for businesses who value simplicity.</p>
         </div>
     </footer>
 
@@ -360,6 +360,10 @@
             button.textContent = 'Creating account...';
             
             try {
+                // Check if user already exists
+                const { data: existingUsers, error: checkError } = await supabaseAuth.auth.admin.listUsers();
+                
+                // Since we can't use admin API from client, we'll try to sign up and let Supabase handle it
                 const { data, error } = await supabaseAuth.auth.signUp({
                     email: email,
                     password: password,
@@ -371,7 +375,18 @@
                     }
                 });
                 
-                if (error) throw error;
+                if (error) {
+                    // Check if it's a duplicate user error
+                    if (error.message.includes('already registered') || error.message.includes('already been registered')) {
+                        throw new Error('An account with this email already exists. Please sign in instead.');
+                    }
+                    throw error;
+                }
+                
+                // Check if user already exists (Supabase returns user even if email exists)
+                if (data.user && !data.user.identities || data.user.identities.length === 0) {
+                    throw new Error('An account with this email already exists. Please sign in instead.');
+                }
                 
                 showSuccess('Account created! Please check your email to verify your account, then you can subscribe to a plan.');
                 document.getElementById('signup-form').reset();
