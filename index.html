@@ -139,14 +139,20 @@
 
     <script src="https://www.paypal.com/sdk/js?client-id=AVT7yA-Ol5ZAxDc686NxPz-YI_ajoNpxJv4z3v1mCjUQBoWeNsTtCdkfX4gvtHoAUsH3iz4vxWxHWD-u&vault=true&intent=subscription" data-sdk-integration-source="button-factory"></script>
     <script>
+        let buttonsRendered = false;
+
         // Use existing supabaseClient from auth-check.js
         // Check if user is logged in and show/hide PayPal buttons
         async function initializePricing() {
+            if (buttonsRendered) {
+                console.log('Buttons already rendered, skipping...');
+                return;
+            }
+            
             console.log('Initializing pricing...');
             const { data: { session }, error } = await supabaseClient.auth.getSession();
             
             console.log('Session:', session);
-            console.log('Error:', error);
             
             if (!session) {
                 // Not logged in - show login notice
@@ -163,11 +169,16 @@
                 // Render PayPal buttons with pre-filled email
                 console.log('Rendering PayPal buttons...');
                 renderPayPalButtons(session.user.email);
+                buttonsRendered = true;
             }
         }
 
         function renderPayPalButtons(userEmail) {
             console.log('Rendering buttons for:', userEmail);
+            
+            // Clear containers first
+            document.getElementById('individual-paypal-container').innerHTML = '';
+            document.getElementById('fullsuite-paypal-container').innerHTML = '';
             
             // Individual Tool Subscription Button ($14.99)
             paypal.Buttons({
@@ -237,14 +248,14 @@
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', () => {
             console.log('DOM loaded, initializing...');
-            initializePricing();
+            setTimeout(initializePricing, 100);
         });
 
         // Also listen for auth state changes
         supabaseClient.auth.onAuthStateChange((event, session) => {
             console.log('Auth state changed:', event, session);
-            if (event === 'SIGNED_IN') {
-                initializePricing();
+            if (event === 'SIGNED_IN' && !buttonsRendered) {
+                setTimeout(initializePricing, 100);
             }
         });
     </script>
