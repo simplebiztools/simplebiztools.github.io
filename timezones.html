@@ -178,28 +178,53 @@
 
     <footer>
         <div class="container">
-            <p>&copy; 2024 SimpleBizTools. <a href="index.html" style="color: white;">Back to Home</a></p>
+            <p>&copy; 2025 SimpleBizTools. <a href="index.html" style="color: white;">Back to Home</a></p>
         </div>
     </footer>
 
     <script>
+        let userHasAccess = false;
+
         // Check access on page load
         (async function() {
-            const access = await checkToolAccess('timezone_converter');
+            const freeUses = getFreeUses('timezone_converter');
             
-            if (!access.hasAccess) {
-                // Block access - show upgrade modal
+            if (freeUses >= 4) {
+                // Check if user has paid access
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                
+                if (session) {
+                    const { data: purchases } = await supabaseClient
+                        .from('user_purchases')
+                        .select('*')
+                        .eq('user_id', session.user.id)
+                        .eq('status', 'active')
+                        .or(`plan_type.eq.lifetime,plan_type.eq.full_suite,and(plan_type.eq.individual_tool,tool_name.eq.timezone_converter)`);
+                    
+                    if (purchases && purchases.length > 0) {
+                        userHasAccess = true;
+                        return;
+                    }
+                }
+                
+                // No access - show modal and disable tool
                 showUpgradeModal('timezone_converter');
-                // Disable all form inputs
                 document.querySelectorAll('input, select, button').forEach(el => {
                     if (!el.closest('#upgrade-modal')) {
                         el.disabled = true;
                     }
                 });
-            } else if (access.reason === 'free_trial' && access.usesRemaining !== undefined) {
-                // Show reminder about remaining uses
-                if (access.usesRemaining <= 1) {
-                    showUpgradeModal('timezone_converter', access.usesRemaining);
+            } else {
+                userHasAccess = true;
+                // Increment on page load for timezone converter
+                incrementFreeUses('timezone_converter');
+                const newUses = getFreeUses('timezone_converter');
+                const remaining = 4 - newUses;
+                
+                if (remaining <= 1 && remaining > 0) {
+                    setTimeout(() => {
+                        showUpgradeModal('timezone_converter', remaining);
+                    }, 2000);
                 }
             }
         })();
