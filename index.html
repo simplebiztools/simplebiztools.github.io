@@ -36,18 +36,6 @@
             </div>
 
             <div class="tool-card">
-                <h3>📝 Changelog Hosting</h3>
-                <p>Host and share your product updates with a clean, public changelog.</p>
-                <a href="changelog.html" class="btn">Coming Soon</a>
-            </div>
-
-            <div class="tool-card">
-                <h3>💬 Anonymous Feedback</h3>
-                <p>Collect honest team feedback with our embeddable widget.</p>
-                <a href="feedback.html" class="btn">Coming Soon</a>
-            </div>
-
-            <div class="tool-card">
                 <h3>🌍 Team Timezone Converter</h3>
                 <p>See what time it is for your entire distributed team.</p>
                 <a href="timezones.html" class="btn">View Tool</a>
@@ -58,6 +46,18 @@
                 <p>Get unlimited access to all tools for one low price.</p>
                 <p class="price">$39.99/month or $299 lifetime</p>
                 <a href="#pricing" class="btn btn-premium">Get Started</a>
+            </div>
+
+            <div class="tool-card" style="opacity: 0.6;">
+                <h3>📝 Changelog Hosting</h3>
+                <p>Host and share your product updates with a clean, public changelog.</p>
+                <a href="changelog.html" class="btn" style="background: #cbd5e0; cursor: not-allowed;">Coming Soon</a>
+            </div>
+
+            <div class="tool-card" style="opacity: 0.6;">
+                <h3>💬 Anonymous Feedback</h3>
+                <p>Collect honest team feedback with our embeddable widget.</p>
+                <a href="feedback.html" class="btn" style="background: #cbd5e0; cursor: not-allowed;">Coming Soon</a>
             </div>
         </section>
 
@@ -88,7 +88,9 @@
                         <li>Email support</li>
                     </ul>
                     <div id="individual-paypal-container" style="margin-top: 20px; min-height: 150px;">
-                        <!-- PayPal button will appear here when logged in -->
+                        <p id="individual-signin-msg" style="display: none; color: #856404; background: #fff3cd; padding: 15px; border-radius: 6px; text-align: center; font-weight: 600;">
+                            Please <a href="auth.html" style="color: #667eea; text-decoration: underline;">sign in</a> to purchase this plan
+                        </p>
                     </div>
                 </div>
                 <div class="pricing-card featured">
@@ -102,7 +104,9 @@
                         <li>Early access to new tools</li>
                     </ul>
                     <div id="fullsuite-paypal-container" style="margin-top: 20px; min-height: 150px;">
-                        <!-- PayPal button will appear here when logged in -->
+                        <p id="fullsuite-signin-msg" style="display: none; color: #856404; background: #fff3cd; padding: 15px; border-radius: 6px; text-align: center; font-weight: 600;">
+                            Please <a href="auth.html" style="color: #667eea; text-decoration: underline;">sign in</a> to purchase this plan
+                        </p>
                     </div>
                 </div>
                 <div class="pricing-card">
@@ -115,7 +119,9 @@
                         <li>Premium support</li>
                     </ul>
                     <div id="lifetime-paypal-container" style="margin-top: 20px;">
-                        <!-- PayPal button will appear here when logged in -->
+                        <p id="lifetime-signin-msg" style="display: none; color: #856404; background: #fff3cd; padding: 15px; border-radius: 6px; text-align: center; font-weight: 600;">
+                            Please <a href="auth.html" style="color: #667eea; text-decoration: underline;">sign in</a> to purchase this plan
+                        </p>
                     </div>
                 </div>
             </div>
@@ -133,7 +139,7 @@
 
     <footer>
         <div class="container">
-            <p>&copy; 2024 SimpleBizTools. Built for businesses who value simplicity.</p>
+            <p>&copy; 2025 SimpleBizTools. Built for businesses who value simplicity.</p>
         </div>
     </footer>
 
@@ -155,16 +161,24 @@
             console.log('Session:', session);
             
             if (!session) {
-                // Not logged in - show login notice
+                // Not logged in - show login notice and signin messages
                 console.log('Not logged in');
                 document.getElementById('login-notice').style.display = 'block';
                 document.getElementById('email-warning').style.display = 'none';
+                document.getElementById('individual-signin-msg').style.display = 'block';
+                document.getElementById('fullsuite-signin-msg').style.display = 'block';
+                document.getElementById('lifetime-signin-msg').style.display = 'block';
             } else {
                 // Logged in - show email warning and PayPal buttons
                 console.log('Logged in as:', session.user.email);
                 document.getElementById('login-notice').style.display = 'none';
                 document.getElementById('email-warning').style.display = 'block';
                 document.getElementById('user-email-display').textContent = session.user.email;
+                
+                // Hide signin messages
+                document.getElementById('individual-signin-msg').style.display = 'none';
+                document.getElementById('fullsuite-signin-msg').style.display = 'none';
+                document.getElementById('lifetime-signin-msg').style.display = 'none';
                 
                 // Render PayPal buttons with pre-filled email
                 console.log('Rendering PayPal buttons...');
