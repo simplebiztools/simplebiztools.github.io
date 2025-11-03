@@ -187,50 +187,33 @@
 
         // Check access on page load
         (async function() {
-            const freeUses = getFreeUses('timezone_converter');
+            const access = await checkToolAccess('timezone_converter');
             
-            if (freeUses >= 4) {
-                // Check if user has paid access
-                const { data: { session } } = await supabaseClient.auth.getSession();
-                
-                if (session) {
-                    const { data: purchases } = await supabaseClient
-                        .from('user_purchases')
-                        .select('*')
-                        .eq('user_id', session.user.id)
-                        .eq('status', 'active')
-                        .or(`plan_type.eq.lifetime,plan_type.eq.full_suite,and(plan_type.eq.individual_tool,tool_name.eq.timezone_converter)`);
-                    
-                    if (purchases && purchases.length > 0) {
-                        userHasAccess = true;
-                        return;
+            if (!access.hasAccess) {
+                if (access.reason === 'limit_reached') {
+                    showUpgradeModal('timezone_converter');
+                    document.querySelectorAll('input, select, button').forEach(el => {
+                        if (!el.closest('#upgrade-modal')) {
+                            el.disabled = true;
+                            el.style.opacity = '0.5';
+                            el.style.cursor = 'not-allowed';
+                        }
+                    });
+                } else if (access.reason === 'free_trial') {
+                    userHasAccess = true;
+                    if (access.usesRemaining <= 1) {
+                        setTimeout(() => {
+                            showUpgradeModal('timezone_converter', access.usesRemaining);
+                        }, 1000);
                     }
                 }
-                
-                // No access - show modal and disable tool
-                showUpgradeModal('timezone_converter');
-                document.querySelectorAll('input, select, button').forEach(el => {
-                    if (!el.closest('#upgrade-modal')) {
-                        el.disabled = true;
-                    }
-                });
             } else {
                 userHasAccess = true;
-                // Increment on page load for timezone converter
-                incrementFreeUses('timezone_converter');
-                const newUses = getFreeUses('timezone_converter');
-                const remaining = 4 - newUses;
-                
-                if (remaining <= 1 && remaining > 0) {
-                    setTimeout(() => {
-                        showUpgradeModal('timezone_converter', remaining);
-                    }, 2000);
-                }
+                console.log('User has full access to Timezone Converter!');
             }
         })();
 
         function updateTimes() {
-            // Update your time
             const now = new Date();
             const yourTimeStr = now.toLocaleTimeString('en-US', { 
                 hour: '2-digit', 
@@ -241,7 +224,6 @@
             document.getElementById('your-timezone').textContent = 
                 Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-            // Update team member times
             document.querySelectorAll('.team-member').forEach(member => {
                 const timezone = member.querySelector('.member-timezone').value;
                 const timeDisplay = member.querySelector('.member-time');
@@ -313,7 +295,6 @@
             btn.closest('.team-member').remove();
         }
 
-        // Update times every second
         setInterval(updateTimes, 1000);
         updateTimes();
     </script>
