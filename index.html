@@ -1,150 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SimpleBizTools - Essential Business Tools</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="auth-check.js"></script>
-</head>
-<body>
-    <header>
-        <div class="container">
-            <h1>SimpleBizTools</h1>
-            <p class="tagline">Essential tools for modern businesses</p>
-        </div>
-    </header>
-
-    <main class="container">
-        <section class="hero">
-            <h2>Simple. Powerful. Affordable.</h2>
-            <p>Access our suite of business tools designed to save you time and money.</p>
-        </section>
-
-        <section class="tools-grid">
-            <div class="tool-card">
-                <h3>📊 Pricing Table Generator</h3>
-                <p>Create beautiful, responsive pricing tables for your website in minutes.</p>
-                <a href="pricing-generator.html" class="btn">Try it Free</a>
-            </div>
-
-            <div class="tool-card">
-                <h3>💰 Meeting Cost Calculator</h3>
-                <p>See the real-time cost of your meetings based on attendee salaries.</p>
-                <a href="meeting-cost.html" class="btn">Calculate Now</a>
-            </div>
-
-            <div class="tool-card">
-                <h3>🌍 Team Timezone Converter</h3>
-                <p>See what time it is for your entire distributed team.</p>
-                <a href="timezones.html" class="btn">View Tool</a>
-            </div>
-
-            <div class="tool-card premium">
-                <h3>⚡ Full Suite Access</h3>
-                <p>Get unlimited access to all tools for one low price.</p>
-                <p class="price">$39.99/month or $299 lifetime</p>
-                <a href="#pricing" class="btn btn-premium">Get Started</a>
-            </div>
-
-            <div class="tool-card" style="opacity: 0.6;">
-                <h3>📝 Changelog Hosting</h3>
-                <p>Host and share your product updates with a clean, public changelog.</p>
-                <a href="changelog.html" class="btn" style="background: #cbd5e0; cursor: not-allowed;">Coming Soon</a>
-            </div>
-
-            <div class="tool-card" style="opacity: 0.6;">
-                <h3>💬 Anonymous Feedback</h3>
-                <p>Collect honest team feedback with our embeddable widget.</p>
-                <a href="feedback.html" class="btn" style="background: #cbd5e0; cursor: not-allowed;">Coming Soon</a>
-            </div>
-        </section>
-
-        <section id="pricing" class="pricing-section">
-            <h2>Simple Pricing</h2>
-            
-            <!-- Login Required Notice -->
-            <div id="login-notice" style="display: none; background: #fff3cd; padding: 20px; border-radius: 8px; margin-bottom: 30px; text-align: center;">
-                <h3 style="color: #856404; margin-bottom: 10px;">🔒 Account Required</h3>
-                <p style="color: #856404; margin-bottom: 15px;">Please sign in or create an account to subscribe to a plan.</p>
-                <a href="auth.html" style="display: inline-block; padding: 12px 30px; background: #667eea; color: white; text-decoration: none; border-radius: 6px; font-weight: 600;">Sign In / Create Account</a>
-            </div>
-
-            <!-- Email Match Warning (shown when logged in) -->
-            <div id="email-warning" style="display: none; background: #e6f7ff; padding: 20px; border-radius: 8px; margin-bottom: 30px; text-align: center; border: 2px solid #1890ff;">
-                <h3 style="color: #0050b3; margin-bottom: 10px;">⚠️ Important: Use Your Account Email with PayPal</h3>
-                <p style="color: #0050b3; margin-bottom: 10px;">You're signed in as: <strong id="user-email-display"></strong></p>
-                <p style="color: #0050b3; font-weight: bold;">Please use this SAME email when paying with PayPal to ensure instant access to your tools.</p>
-            </div>
-
-            <div class="pricing-options">
-                <div class="pricing-card">
-                    <h3>Individual Tools</h3>
-                    <p class="price">$14.99<span>/month per tool</span></p>
-                    <ul>
-                        <li>Access to one tool</li>
-                        <li>Unlimited usage</li>
-                        <li>Email support</li>
-                    </ul>
-                    <div id="individual-paypal-container" style="margin-top: 20px; min-height: 150px;">
-                        <p id="individual-signin-msg" style="display: none; color: #856404; background: #fff3cd; padding: 15px; border-radius: 6px; text-align: center; font-weight: 600;">
-                            Please <a href="auth.html" style="color: #667eea; text-decoration: underline;">sign in</a> to purchase this plan
-                        </p>
-                    </div>
-                </div>
-                <div class="pricing-card featured">
-                    <div class="badge">Best Value</div>
-                    <h3>Full Suite</h3>
-                    <p class="price">$39.99<span>/month</span></p>
-                    <ul>
-                        <li>All tools included</li>
-                        <li>Unlimited usage</li>
-                        <li>Priority support</li>
-                        <li>Early access to new tools</li>
-                    </ul>
-                    <div id="fullsuite-paypal-container" style="margin-top: 20px; min-height: 150px;">
-                        <p id="fullsuite-signin-msg" style="display: none; color: #856404; background: #fff3cd; padding: 15px; border-radius: 6px; text-align: center; font-weight: 600;">
-                            Please <a href="auth.html" style="color: #667eea; text-decoration: underline;">sign in</a> to purchase this plan
-                        </p>
-                    </div>
-                </div>
-                <div class="pricing-card">
-                    <h3>Lifetime Deal</h3>
-                    <p class="price">$299<span>one-time</span></p>
-                    <ul>
-                        <li>All tools forever</li>
-                        <li>All future tools included</li>
-                        <li>Unlimited usage</li>
-                        <li>Premium support</li>
-                    </ul>
-                    <div id="lifetime-paypal-container" style="margin-top: 20px;">
-                        <p id="lifetime-signin-msg" style="display: none; color: #856404; background: #fff3cd; padding: 15px; border-radius: 6px; text-align: center; font-weight: 600;">
-                            Please <a href="auth.html" style="color: #667eea; text-decoration: underline;">sign in</a> to purchase this plan
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section id="contact" class="pricing-section" style="margin-top: 80px;">
-            <h2>Contact Us</h2>
-            <div style="max-width: 600px; margin: 40px auto; text-align: center; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.07);">
-                <p style="color: #718096; font-size: 1.2em; margin-bottom: 30px;">Have questions? Need help? We're here for you!</p>
-                <a href="mailto:SimpleBizTools101@gmail.com" style="display: inline-block; padding: 15px 40px; background: #667eea; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 1.1em;">📧 Email Us</a>
-                <p style="color: #718096; margin-top: 20px;">SimpleBizTools101@gmail.com</p>
-            </div>
-        </section>
-    </main>
-
-    <footer>
-        <div class="container">
-            <p>&copy; 2025 SimpleBizTools. Built for businesses who value simplicity.</p>
-        </div>
-    </footer>
-
-    <script src="https://www.paypal.com/sdk/js?client-id=AVT7yA-Ol5ZAxDc686NxPz-YI_ajoNpxJv4z3v1mCjUQBoWeNsTtCdkfX4gvtHoAUsH3iz4vxWxHWD-u&vault=true&intent=subscription" data-sdk-integration-source="button-factory"></script>
-    <script>
+<script>
         let buttonsRendered = false;
 
         async function initializePricing() {
@@ -184,6 +38,13 @@
             document.getElementById('individual-paypal-container').innerHTML = '';
             document.getElementById('fullsuite-paypal-container').innerHTML = '';
             
+            // Tool to Plan ID mapping
+            const toolPlans = {
+                'pricing_generator': 'P-9M74147901295574ENEDFVNA',
+                'meeting_cost': 'P-1AA978818A523613ENEEBQLA',
+                'timezone_converter': 'P-0VP50604YN419861LNEEBREQ'
+            };
+            
             // Individual tool section
             const individualHTML = `
                 <div style="margin-bottom: 15px;">
@@ -208,6 +69,7 @@
                     return;
                 }
                 
+                const planId = toolPlans[tool];
                 container.innerHTML = '<p style="color: #667eea; padding: 15px; text-align: center;">Loading...</p>';
                 
                 setTimeout(() => {
@@ -216,9 +78,8 @@
                         style: { shape: 'pill', color: 'gold', layout: 'vertical', label: 'subscribe' },
                         createSubscription: function(data, actions) {
                             return actions.subscription.create({
-                                plan_id: 'P-9M74147901295574ENEDFVNA',
-                                subscriber: { email_address: userEmail },
-                                custom_id: tool
+                                plan_id: planId,
+                                subscriber: { email_address: userEmail }
                             });
                         },
                         onApprove: function(data, actions) {
@@ -266,5 +127,3 @@
             }
         });
     </script>
-</body>
-</html>
