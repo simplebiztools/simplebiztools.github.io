@@ -64,6 +64,9 @@
         <section id="pricing" class="pricing-section">
             <h2>Simple Pricing</h2>
             
+            <!-- Access Status Banner (shown when logged in) -->
+            <div id="access-status-banner" style="display: none;"></div>
+            
             <!-- Login Required Notice -->
             <div id="login-notice" style="display: none; background: #fff3cd; padding: 20px; border-radius: 8px; margin-bottom: 30px; text-align: center;">
                 <h3 style="color: #856404; margin-bottom: 10px;">🔒 Account Required</h3>
@@ -79,7 +82,7 @@
             </div>
 
             <div class="pricing-options">
-                <div class="pricing-card">
+                <div class="pricing-card" id="individual-card">
                     <h3>Individual Tools</h3>
                     <p class="price">$14.99<span>/month per tool</span></p>
                     <ul>
@@ -93,7 +96,7 @@
                         </p>
                     </div>
                 </div>
-                <div class="pricing-card featured">
+                <div class="pricing-card featured" id="fullsuite-card">
                     <div class="badge">Best Value</div>
                     <h3>Full Suite</h3>
                     <p class="price">$39.99<span>/month</span></p>
@@ -109,7 +112,7 @@
                         </p>
                     </div>
                 </div>
-                <div class="pricing-card">
+                <div class="pricing-card" id="lifetime-card">
                     <h3>Lifetime Deal</h3>
                     <p class="price">$299<span>one-time</span></p>
                     <ul>
@@ -146,6 +149,11 @@
     <script src="https://www.paypal.com/sdk/js?client-id=AVT7yA-Ol5ZAxDc686NxPz-YI_ajoNpxJv4z3v1mCjUQBoWeNsTtCdkfX4gvtHoAUsH3iz4vxWxHWD-u&vault=true&intent=subscription" data-sdk-integration-source="button-factory"></script>
     <script>
         let buttonsRendered = false;
+        let userSubscriptions = {
+            hasLifetime: false,
+            hasFullSuite: false,
+            ownedTools: []
+        };
 
         async function initializePricing() {
             if (buttonsRendered) {
@@ -173,16 +181,78 @@
                 document.getElementById('fullsuite-signin-msg').style.display = 'none';
                 document.getElementById('lifetime-signin-msg').style.display = 'none';
                 
+                await checkUserSubscriptions(session.user.email);
                 renderPayPalButtons(session.user.email);
                 buttonsRendered = true;
             }
         }
 
+        async function checkUserSubscriptions(email) {
+            const { data: purchases } = await supabaseClient
+                .from('user_purchases')
+                .select('*')
+                .eq('email', email)
+                .eq('status', 'active');
+            
+            if (purchases && purchases.length > 0) {
+                userSubscriptions.hasLifetime = purchases.some(p => p.plan_type === 'lifetime');
+                userSubscriptions.hasFullSuite = purchases.some(p => p.plan_type === 'full_suite');
+                userSubscriptions.ownedTools = purchases
+                    .filter(p => p.plan_type === 'individual_tool')
+                    .map(p => p.tool_name);
+                
+                showAccessBanner();
+            }
+        }
+
+        function showAccessBanner() {
+            const banner = document.getElementById('access-status-banner');
+            let badgeHTML = '';
+            let message = '';
+            
+            if (userSubscriptions.hasLifetime) {
+                badgeHTML = `
+                    <div style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; border-radius: 50px; font-weight: 600; font-size: 1.2em; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); margin-bottom: 20px;">
+                        ⭐ LIFETIME ACCESS - All Tools Unlocked Forever! ⭐
+                    </div>
+                `;
+                message = 'You have lifetime access to all current and future tools!';
+            } else if (userSubscriptions.hasFullSuite) {
+                badgeHTML = `
+                    <div style="display: inline-block; background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); color: white; padding: 12px 25px; border-radius: 50px; font-weight: 600; font-size: 1.1em; box-shadow: 0 4px 12px rgba(72, 187, 120, 0.4); margin-bottom: 20px;">
+                        💎 FULL SUITE MEMBER - All Tools Unlocked! 💎
+                    </div>
+                `;
+                message = 'You have access to all current and future tools!';
+            } else if (userSubscriptions.ownedTools.length > 0) {
+                const toolNames = {
+                    'pricing_generator': 'Pricing Generator',
+                    'meeting_cost': 'Meeting Cost Calculator',
+                    'timezone_converter': 'Timezone Converter'
+                };
+                const ownedNames = userSubscriptions.ownedTools.map(t => toolNames[t]).join(', ');
+                badgeHTML = `
+                    <div style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #5568d3 100%); color: white; padding: 10px 20px; border-radius: 50px; font-weight: 600; box-shadow: 0 4px 10px rgba(102, 126, 234, 0.3); margin-bottom: 20px;">
+                        🎯 ACTIVE SUBSCRIBER
+                    </div>
+                `;
+                message = `You own: ${ownedNames}`;
+            }
+            
+            if (badgeHTML) {
+                banner.innerHTML = `
+                    <div style="text-align: center; background: white; padding: 30px; border-radius: 12px; margin-bottom: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.07);">
+                        ${badgeHTML}
+                        <p style="color: #2d3748; font-size: 1.1em; margin: 0;">${message}</p>
+                    </div>
+                `;
+                banner.style.display = 'block';
+            }
+        }
+
         function renderPayPalButtons(userEmail) {
             console.log('Rendering buttons for:', userEmail);
-            
-            document.getElementById('individual-paypal-container').innerHTML = '';
-            document.getElementById('fullsuite-paypal-container').innerHTML = '';
+            console.log('User subscriptions:', userSubscriptions);
             
             // Tool to Plan ID mapping
             const toolPlans = {
@@ -191,78 +261,132 @@
                 'timezone_converter': 'P-0VP50604YN419861LNEEBREQ'
             };
             
-            // Individual tool section
-            const individualHTML = `
-                <div style="margin-bottom: 15px;">
-                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #2d3748;">Select Your Tool:</label>
-                    <select id="tool-selector" style="width: 100%; padding: 10px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 1em;">
-                        <option value="">Choose a tool...</option>
-                        <option value="pricing_generator">📊 Pricing Table Generator</option>
-                        <option value="meeting_cost">💰 Meeting Cost Calculator</option>
-                        <option value="timezone_converter">🌍 Team Timezone Converter</option>
-                    </select>
-                </div>
-                <div id="ind-btn"></div>
-            `;
-            document.getElementById('individual-paypal-container').innerHTML = individualHTML;
+            const toolNames = {
+                'pricing_generator': '📊 Pricing Table Generator',
+                'meeting_cost': '💰 Meeting Cost Calculator',
+                'timezone_converter': '🌍 Team Timezone Converter'
+            };
             
-            document.getElementById('tool-selector').addEventListener('change', function(e) {
-                const tool = e.target.value;
-                const container = document.getElementById('ind-btn');
-                
-                if (!tool) {
-                    container.innerHTML = '<p style="color: #718096; text-align: center; padding: 15px;">Select a tool to continue</p>';
-                    return;
+            // Individual tool section
+            if (userSubscriptions.hasLifetime || userSubscriptions.hasFullSuite) {
+                // Hide entire individual tools section
+                document.getElementById('individual-card').style.opacity = '0.5';
+                document.getElementById('individual-paypal-container').innerHTML = `
+                    <p style="color: #48bb78; background: #f0fff4; padding: 15px; border-radius: 6px; text-align: center; font-weight: 600; border: 2px solid #48bb78;">
+                        ✅ You already have access to all tools!
+                    </p>
+                `;
+            } else {
+                // Show dropdown with available tools
+                let options = '';
+                for (const [toolKey, toolName] of Object.entries(toolNames)) {
+                    if (userSubscriptions.ownedTools.includes(toolKey)) {
+                        options += `<option value="${toolKey}" disabled style="color: #a0aec0;">${toolName} (Owned)</option>`;
+                    } else {
+                        options += `<option value="${toolKey}">${toolName}</option>`;
+                    }
                 }
                 
-                const planId = toolPlans[tool];
-                container.innerHTML = '<p style="color: #667eea; padding: 15px; text-align: center;">Loading...</p>';
+                const individualHTML = `
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #2d3748;">Select Your Tool:</label>
+                        <select id="tool-selector" style="width: 100%; padding: 10px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 1em;">
+                            <option value="">Choose a tool...</option>
+                            ${options}
+                        </select>
+                    </div>
+                    <div id="ind-btn"></div>
+                `;
+                document.getElementById('individual-paypal-container').innerHTML = individualHTML;
                 
-                setTimeout(() => {
-                    container.innerHTML = '';
-                    paypal.Buttons({
-                        style: { shape: 'pill', color: 'gold', layout: 'vertical', label: 'subscribe' },
-                        createSubscription: function(data, actions) {
-                            return actions.subscription.create({
-                                plan_id: planId,
-                                subscriber: { email_address: userEmail }
-                            });
-                        },
-                        onApprove: function(data, actions) {
-                            alert('✅ Subscription successful! Refreshing...');
-                            setTimeout(() => window.location.reload(), 2000);
-                        }
-                    }).render('#ind-btn').catch(err => {
-                        console.error('Button error:', err);
-                        container.innerHTML = '<p style="color: #fc8181;">Error loading button</p>';
-                    });
-                }, 500);
-            });
-            
-            document.getElementById('ind-btn').innerHTML = '<p style="color: #718096; text-align: center; padding: 15px;">Select a tool to continue</p>';
+                document.getElementById('tool-selector').addEventListener('change', function(e) {
+                    const tool = e.target.value;
+                    const container = document.getElementById('ind-btn');
+                    
+                    if (!tool) {
+                        container.innerHTML = '<p style="color: #718096; text-align: center; padding: 15px;">Select a tool to continue</p>';
+                        return;
+                    }
+                    
+                    if (userSubscriptions.ownedTools.includes(tool)) {
+                        container.innerHTML = '<p style="color: #48bb78; background: #f0fff4; padding: 15px; border-radius: 6px; text-align: center; font-weight: 600; border: 2px solid #48bb78;">You already own this tool!</p>';
+                        return;
+                    }
+                    
+                    const planId = toolPlans[tool];
+                    container.innerHTML = '<p style="color: #667eea; padding: 15px; text-align: center;">Loading...</p>';
+                    
+                    setTimeout(() => {
+                        container.innerHTML = '';
+                        paypal.Buttons({
+                            style: { shape: 'pill', color: 'gold', layout: 'vertical', label: 'subscribe' },
+                            createSubscription: function(data, actions) {
+                                return actions.subscription.create({
+                                    plan_id: planId,
+                                    subscriber: { email_address: userEmail }
+                                });
+                            },
+                            onApprove: function(data, actions) {
+                                alert('✅ Subscription successful! Refreshing...');
+                                setTimeout(() => window.location.reload(), 2000);
+                            }
+                        }).render('#ind-btn').catch(err => {
+                            console.error('Button error:', err);
+                            container.innerHTML = '<p style="color: #fc8181;">Error loading button</p>';
+                        });
+                    }, 500);
+                });
+                
+                document.getElementById('ind-btn').innerHTML = '<p style="color: #718096; text-align: center; padding: 15px;">Select a tool to continue</p>';
+            }
 
             // Full suite button
-            paypal.Buttons({
-                style: { shape: 'pill', color: 'gold', layout: 'vertical', label: 'subscribe' },
-                createSubscription: function(data, actions) {
-                    return actions.subscription.create({
-                        plan_id: 'P-4TW04507V0019881ANEDEGUA',
-                        subscriber: { email_address: userEmail }
-                    });
-                },
-                onApprove: function(data, actions) {
-                    alert('✅ Subscription successful! Refreshing...');
-                    setTimeout(() => window.location.reload(), 2000);
-                }
-            }).render('#fullsuite-paypal-container');
+            if (userSubscriptions.hasLifetime) {
+                document.getElementById('fullsuite-card').style.opacity = '0.5';
+                document.getElementById('fullsuite-paypal-container').innerHTML = `
+                    <p style="color: #667eea; background: #eef2ff; padding: 15px; border-radius: 6px; text-align: center; font-weight: 600; border: 2px solid #667eea;">
+                        ⭐ You have Lifetime Access (higher tier!)
+                    </p>
+                `;
+            } else if (userSubscriptions.hasFullSuite) {
+                document.getElementById('fullsuite-card').style.opacity = '0.5';
+                document.getElementById('fullsuite-paypal-container').innerHTML = `
+                    <p style="color: #48bb78; background: #f0fff4; padding: 15px; border-radius: 6px; text-align: center; font-weight: 600; border: 2px solid #48bb78;">
+                        ✅ You already have Full Suite access!
+                    </p>
+                `;
+            } else {
+                paypal.Buttons({
+                    style: { shape: 'pill', color: 'gold', layout: 'vertical', label: 'subscribe' },
+                    createSubscription: function(data, actions) {
+                        return actions.subscription.create({
+                            plan_id: 'P-4TW04507V0019881ANEDEGUA',
+                            subscriber: { email_address: userEmail }
+                        });
+                    },
+                    onApprove: function(data, actions) {
+                        alert('✅ Subscription successful! Refreshing...');
+                        setTimeout(() => window.location.reload(), 2000);
+                    }
+                }).render('#fullsuite-paypal-container');
+            }
 
             // Lifetime button
-            document.getElementById('lifetime-paypal-container').innerHTML = `
-                <a href="https://www.paypal.com/ncp/payment/K53FU4G4SCYBN" target="_blank" 
-                   style="display: inline-block; margin-top: 20px; padding: 15px 30px; background: #667eea; color: white; text-decoration: none; border-radius: 8px; font-weight: 600;">
-                   Buy Lifetime Access
-                </a>
-            `;
+            if (userSubscriptions.hasLifetime) {
+                document.getElementById('lifetime-card').style.opacity = '0.5';
+                document.getElementById('lifetime-paypal-container').innerHTML = `
+                    <p style="color: #48bb78; background: #f0fff4; padding: 15px; border-radius: 6px; text-align: center; font-weight: 600; border: 2px solid #48bb78;">
+                        ✅ You already have Lifetime Access!
+                    </p>
+                `;
+            } else {
+                document.getElementById('lifetime-paypal-container').innerHTML = `
+                    <a href="https://www.paypal.com/ncp/payment/K53FU4G4SCYBN" target="_blank" 
+                       style="display: inline-block; margin-top: 20px; padding: 15px 30px; background: #667eea; color: white; text-decoration: none; border-radius: 8px; font-weight: 600;">
+                       Buy Lifetime Access
+                    </a>
+                `;
+            }
         }
 
         document.addEventListener('DOMContentLoaded', () => setTimeout(initializePricing, 100));
