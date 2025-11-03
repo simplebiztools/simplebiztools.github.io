@@ -247,6 +247,9 @@
 
     <script>
         let userHasAccess = false;
+        let meetingInterval = null;
+        let seconds = 0;
+        let isRunning = false;
 
         // Check access on page load
         (async function() {
@@ -255,7 +258,6 @@
             if (!access.hasAccess) {
                 if (access.reason === 'limit_reached') {
                     showUpgradeModal('meeting_cost');
-                    // Disable the tool
                     document.querySelectorAll('input, textarea, button').forEach(el => {
                         if (!el.closest('#upgrade-modal')) {
                             el.disabled = true;
@@ -264,7 +266,6 @@
                         }
                     });
                 } else if (access.reason === 'free_trial') {
-                    // Show remaining uses but allow access
                     userHasAccess = true;
                     if (access.usesRemaining <= 1) {
                         setTimeout(() => {
@@ -273,43 +274,93 @@
                     }
                 }
             } else {
-                // Has paid access
                 userHasAccess = true;
                 console.log('User has full access to Meeting Cost Calculator!');
             }
         })();
 
-        async function checkAndIncrementUse() {
-            // If already checked and has access, allow
-            if (userHasAccess) {
-                return true;
-            }
-            
-            const access = await checkToolAccess('meeting_cost');
-            
-            if (!access.hasAccess) {
-                showUpgradeModal('meeting_cost');
-                return false;
-            }
-            
-            // Increment free use
-            if (access.reason === 'free_trial') {
-                incrementFreeUses('meeting_cost');
-                const newUses = getFreeUses('meeting_cost');
-                const remaining = 4 - newUses;
-                
-                if (remaining <= 1 && remaining > 0) {
-                    setTimeout(() => {
-                        showUpgradeModal('meeting_cost', remaining);
-                    }, 500);
-                }
-            }
-            
-            return true;
+        function addAttendee() {
+            const list = document.getElementById('attendee-list');
+            const attendee = document.createElement('div');
+            attendee.className = 'attendee-item';
+            attendee.innerHTML = `
+                <input type="text" placeholder="Name" class="attendee-name">
+                <input type="text" placeholder="Role" class="attendee-role">
+                <input type="number" placeholder="Salary ($)" class="attendee-salary" oninput="updateCost()">
+                <button class="remove-btn" onclick="removeAttendee(this)">Remove</button>
+            `;
+            list.appendChild(attendee);
+            updateCost();
         }
 
-        // Rest of your meeting cost calculator code stays the same...
-        // (Keep all the existing meeting cost calculator functionality)
+        function removeAttendee(btn) {
+            if (document.querySelectorAll('.attendee-item').length > 1) {
+                btn.closest('.attendee-item').remove();
+                updateCost();
+            } else {
+                alert('You need at least one attendee!');
+            }
+        }
+
+        function updateCost() {
+            const attendees = document.querySelectorAll('.attendee-item');
+            let totalSalary = 0;
+            
+            attendees.forEach(attendee => {
+                const salary = parseFloat(attendee.querySelector('.attendee-salary').value) || 0;
+                totalSalary += salary;
+            });
+            
+            const hourlyRate = totalSalary / 2080; // 2080 work hours per year
+            const minuteRate = hourlyRate / 60;
+            const minutes = Math.floor(seconds / 60);
+            const totalCost = minuteRate * minutes;
+            
+            document.getElementById('cost-per-minute').textContent = '$' + minuteRate.toFixed(2);
+            document.getElementById('attendee-count').textContent = attendees.length;
+            document.getElementById('duration').textContent = minutes + ' min';
+            document.getElementById('total-cost').textContent = '$' + totalCost.toFixed(2);
+        }
+
+        function startMeeting() {
+            if (isRunning) return;
+            isRunning = true;
+            document.getElementById('start-btn').style.display = 'none';
+            document.getElementById('stop-btn').style.display = 'inline-block';
+            
+            meetingInterval = setInterval(() => {
+                seconds++;
+                updateTimer();
+                updateCost();
+            }, 1000);
+        }
+
+        function stopMeeting() {
+            isRunning = false;
+            clearInterval(meetingInterval);
+            document.getElementById('start-btn').style.display = 'inline-block';
+            document.getElementById('stop-btn').style.display = 'none';
+        }
+
+        function resetMeeting() {
+            stopMeeting();
+            seconds = 0;
+            updateTimer();
+            updateCost();
+        }
+
+        function updateTimer() {
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const secs = seconds % 60;
+            
+            document.getElementById('timer').textContent = 
+                String(hours).padStart(2, '0') + ':' +
+                String(minutes).padStart(2, '0') + ':' +
+                String(secs).padStart(2, '0');
+        }
+
+        updateCost();
     </script>
 </body>
 </html>
