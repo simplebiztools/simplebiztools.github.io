@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="auth-check.js"></script>
+    <script src="dark-mode.js"></script>
 </head>
 <body>
     <header>
@@ -22,7 +23,7 @@
             <p>Access our suite of business tools designed to save you time and money.</p>
         </section>
 
-        <section class="tools-grid">
+        <section class="tools-grid" id="tools-grid">
             <div class="tool-card">
                 <h3>📊 Pricing Table Generator</h3>
                 <p>Create beautiful, responsive pricing tables for your website in minutes.</p>
@@ -41,7 +42,7 @@
                 <a href="timezones.html" class="btn">View Tool</a>
             </div>
 
-            <div class="tool-card premium">
+            <div class="tool-card premium" id="full-suite-card">
                 <h3>⚡ Full Suite Access</h3>
                 <p>Get unlimited access to all tools for one low price.</p>
                 <p class="price">$39.99/month or $299 lifetime</p>
@@ -68,9 +69,9 @@
             <div id="access-status-banner" style="display: none;"></div>
             
             <!-- Login Required Notice -->
-            <div id="login-notice" style="display: none; background: #fff3cd; padding: 20px; border-radius: 8px; margin-bottom: 30px; text-align: center;">
-                <h3 style="color: #856404; margin-bottom: 10px;">🔒 Account Required</h3>
-                <p style="color: #856404; margin-bottom: 15px;">Please sign in or create an account to subscribe to a plan.</p>
+            <div id="login-notice" style="display: none; background: var(--warning-bg); padding: 20px; border-radius: 8px; margin-bottom: 30px; text-align: center;">
+                <h3 style="color: var(--warning-text); margin-bottom: 10px;">🔒 Account Required</h3>
+                <p style="color: var(--warning-text); margin-bottom: 15px;">Please sign in or create an account to subscribe to a plan.</p>
                 <a href="auth.html" style="display: inline-block; padding: 12px 30px; background: #667eea; color: white; text-decoration: none; border-radius: 6px; font-weight: 600;">Sign In / Create Account</a>
             </div>
 
@@ -91,7 +92,7 @@
                         <li>Email support</li>
                     </ul>
                     <div id="individual-paypal-container" style="margin-top: 20px; min-height: 150px;">
-                        <p id="individual-signin-msg" style="display: none; color: #856404; background: #fff3cd; padding: 15px; border-radius: 6px; text-align: center; font-weight: 600;">
+                        <p id="individual-signin-msg" style="display: none; color: var(--warning-text); background: var(--warning-bg); padding: 15px; border-radius: 6px; text-align: center; font-weight: 600;">
                             Please <a href="auth.html" style="color: #667eea; text-decoration: underline;">sign in</a> to purchase this plan
                         </p>
                     </div>
@@ -107,7 +108,7 @@
                         <li>Early access to new tools</li>
                     </ul>
                     <div id="fullsuite-paypal-container" style="margin-top: 20px; min-height: 150px;">
-                        <p id="fullsuite-signin-msg" style="display: none; color: #856404; background: #fff3cd; padding: 15px; border-radius: 6px; text-align: center; font-weight: 600;">
+                        <p id="fullsuite-signin-msg" style="display: none; color: var(--warning-text); background: var(--warning-bg); padding: 15px; border-radius: 6px; text-align: center; font-weight: 600;">
                             Please <a href="auth.html" style="color: #667eea; text-decoration: underline;">sign in</a> to purchase this plan
                         </p>
                     </div>
@@ -122,7 +123,7 @@
                         <li>Premium support</li>
                     </ul>
                     <div id="lifetime-paypal-container" style="margin-top: 20px;">
-                        <p id="lifetime-signin-msg" style="display: none; color: #856404; background: #fff3cd; padding: 15px; border-radius: 6px; text-align: center; font-weight: 600;">
+                        <p id="lifetime-signin-msg" style="display: none; color: var(--warning-text); background: var(--warning-bg); padding: 15px; border-radius: 6px; text-align: center; font-weight: 600;">
                             Please <a href="auth.html" style="color: #667eea; text-decoration: underline;">sign in</a> to purchase this plan
                         </p>
                     </div>
@@ -132,10 +133,10 @@
 
         <section id="contact" class="pricing-section" style="margin-top: 80px;">
             <h2>Contact Us</h2>
-            <div style="max-width: 600px; margin: 40px auto; text-align: center; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.07);">
-                <p style="color: #718096; font-size: 1.2em; margin-bottom: 30px;">Have questions? Need help? We're here for you!</p>
+            <div style="max-width: 600px; margin: 40px auto; text-align: center; background: var(--bg-card); padding: 40px; border-radius: 12px; box-shadow: var(--shadow);">
+                <p style="color: var(--text-secondary); font-size: 1.2em; margin-bottom: 30px;">Have questions? Need help? We're here for you!</p>
                 <a href="mailto:SimpleBizTools101@gmail.com" style="display: inline-block; padding: 15px 40px; background: #667eea; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 1.1em;">📧 Email Us</a>
-                <p style="color: #718096; margin-top: 20px;">SimpleBizTools101@gmail.com</p>
+                <p style="color: var(--text-secondary); margin-top: 20px;">SimpleBizTools101@gmail.com</p>
             </div>
         </section>
     </main>
@@ -174,15 +175,23 @@
             } else {
                 console.log('Logged in as:', session.user.email);
                 document.getElementById('login-notice').style.display = 'none';
-                document.getElementById('email-warning').style.display = 'block';
-                document.getElementById('user-email-display').textContent = session.user.email;
                 
                 document.getElementById('individual-signin-msg').style.display = 'none';
                 document.getElementById('fullsuite-signin-msg').style.display = 'none';
                 document.getElementById('lifetime-signin-msg').style.display = 'none';
                 
                 await checkUserSubscriptions(session.user.email);
+                
+                // Only show email warning if NOT lifetime
+                if (userSubscriptions.hasLifetime) {
+                    document.getElementById('email-warning').style.display = 'none';
+                } else {
+                    document.getElementById('email-warning').style.display = 'block';
+                    document.getElementById('user-email-display').textContent = session.user.email;
+                }
+                
                 renderPayPalButtons(session.user.email);
+                hideOwnedCards();
                 buttonsRendered = true;
             }
         }
@@ -241,12 +250,22 @@
             
             if (badgeHTML) {
                 banner.innerHTML = `
-                    <div style="text-align: center; background: white; padding: 30px; border-radius: 12px; margin-bottom: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.07);">
+                    <div style="text-align: center; background: var(--bg-card); padding: 30px; border-radius: 12px; margin-bottom: 30px; box-shadow: var(--shadow);">
                         ${badgeHTML}
-                        <p style="color: #2d3748; font-size: 1.1em; margin: 0;">${message}</p>
+                        <p style="color: var(--text-primary); font-size: 1.1em; margin: 0;">${message}</p>
                     </div>
                 `;
                 banner.style.display = 'block';
+            }
+        }
+
+        function hideOwnedCards() {
+            // Hide Full Suite card from tools grid if they have Full Suite or Lifetime
+            if (userSubscriptions.hasFullSuite || userSubscriptions.hasLifetime) {
+                const fullSuiteCard = document.getElementById('full-suite-card');
+                if (fullSuiteCard) {
+                    fullSuiteCard.style.display = 'none';
+                }
             }
         }
 
@@ -254,7 +273,6 @@
             console.log('Rendering buttons for:', userEmail);
             console.log('User subscriptions:', userSubscriptions);
             
-            // Tool to Plan ID mapping
             const toolPlans = {
                 'pricing_generator': 'P-9M74147901295574ENEDFVNA',
                 'meeting_cost': 'P-1AA978818A523613ENEEBQLA',
@@ -269,7 +287,6 @@
             
             // Individual tool section
             if (userSubscriptions.hasLifetime || userSubscriptions.hasFullSuite) {
-                // Hide entire individual tools section
                 document.getElementById('individual-card').style.opacity = '0.5';
                 document.getElementById('individual-paypal-container').innerHTML = `
                     <p style="color: #48bb78; background: #f0fff4; padding: 15px; border-radius: 6px; text-align: center; font-weight: 600; border: 2px solid #48bb78;">
@@ -277,7 +294,6 @@
                     </p>
                 `;
             } else {
-                // Show dropdown with available tools
                 let options = '';
                 for (const [toolKey, toolName] of Object.entries(toolNames)) {
                     if (userSubscriptions.ownedTools.includes(toolKey)) {
@@ -289,8 +305,8 @@
                 
                 const individualHTML = `
                     <div style="margin-bottom: 15px;">
-                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #2d3748;">Select Your Tool:</label>
-                        <select id="tool-selector" style="width: 100%; padding: 10px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 1em;">
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-primary);">Select Your Tool:</label>
+                        <select id="tool-selector" style="width: 100%; padding: 10px; border: 2px solid var(--border-color); border-radius: 6px; font-size: 1em; background: var(--bg-card); color: var(--text-primary);">
                             <option value="">Choose a tool...</option>
                             ${options}
                         </select>
@@ -304,7 +320,7 @@
                     const container = document.getElementById('ind-btn');
                     
                     if (!tool) {
-                        container.innerHTML = '<p style="color: #718096; text-align: center; padding: 15px;">Select a tool to continue</p>';
+                        container.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 15px;">Select a tool to continue</p>';
                         return;
                     }
                     
@@ -337,7 +353,7 @@
                     }, 500);
                 });
                 
-                document.getElementById('ind-btn').innerHTML = '<p style="color: #718096; text-align: center; padding: 15px;">Select a tool to continue</p>';
+                document.getElementById('ind-btn').innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 15px;">Select a tool to continue</p>';
             }
 
             // Full suite button
