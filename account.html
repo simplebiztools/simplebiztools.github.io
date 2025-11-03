@@ -21,6 +21,32 @@
             border-bottom: 2px solid #e2e8f0;
             padding-bottom: 20px;
             margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .tier-badge {
+            display: inline-block;
+            padding: 12px 25px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1.1em;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .badge-lifetime {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .badge-fullsuite {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+        }
+        
+        .badge-individual {
+            background: linear-gradient(135deg, #667eea 0%, #5568d3 100%);
+            color: white;
         }
         
         .subscription-card {
@@ -29,11 +55,18 @@
             border-radius: 8px;
             padding: 20px;
             margin-bottom: 20px;
+            transition: all 0.3s ease;
         }
         
         .subscription-card.active {
             border-color: #48bb78;
             background: #f0fff4;
+        }
+        
+        .subscription-card.inactive {
+            border-color: #fc8181;
+            background: #fff5f5;
+            opacity: 0.7;
         }
         
         .subscription-header {
@@ -61,7 +94,7 @@
             color: white;
         }
         
-        .badge-inactive {
+        .badge-cancelled {
             background: #fc8181;
             color: white;
         }
@@ -69,6 +102,10 @@
         .subscription-details {
             color: #718096;
             margin-bottom: 15px;
+        }
+        
+        .subscription-details p {
+            margin: 5px 0;
         }
         
         .btn {
@@ -80,6 +117,7 @@
             text-decoration: none;
             display: inline-block;
             margin-right: 10px;
+            transition: all 0.3s ease;
         }
         
         .btn-danger {
@@ -89,6 +127,15 @@
         
         .btn-danger:hover {
             background: #f56565;
+        }
+        
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #2d3748;
+        }
+        
+        .btn-secondary:hover {
+            background: #cbd5e0;
         }
         
         .btn-primary {
@@ -111,6 +158,12 @@
             padding: 60px;
             color: #718096;
         }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
     </style>
 </head>
 <body>
@@ -124,6 +177,7 @@
     <main class="container">
         <div class="account-container">
             <div class="account-header">
+                <div id="tier-badge-container"></div>
                 <h2 id="user-email-display">Loading...</h2>
                 <p style="color: #718096;">Manage your subscriptions and account settings</p>
             </div>
@@ -132,7 +186,7 @@
                 <p>Loading your subscriptions...</p>
             </div>
             
-            <div style="margin-top: 40px; padding-top: 20px; border-top: 2px solid #e2e8f0;">
+            <div style="margin-top: 40px; padding-top: 20px; border-top: 2px solid #e2e8f0; text-align: center;">
                 <a href="index.html" class="btn btn-primary">← Back to Home</a>
                 <button onclick="handleLogout()" class="btn btn-danger">Sign Out</button>
             </div>
@@ -185,48 +239,115 @@
                 return;
             }
             
-            // Group by plan type to show unique subscriptions
+            // Group by plan type and tool to avoid showing duplicates
             const uniquePlans = {};
             purchases.forEach(p => {
-                const key = `${p.plan_type}_${p.tool_name || 'all'}`;
+                const key = `${p.plan_type}_${p.tool_name || 'all'}_${p.status}`;
                 if (!uniquePlans[key] || new Date(p.created_at) > new Date(uniquePlans[key].created_at)) {
                     uniquePlans[key] = p;
                 }
             });
             
+            // Separate active and inactive
+            const activePurchases = [];
+            const inactivePurchases = [];
+            
+            Object.values(uniquePlans).forEach(p => {
+                if (p.status === 'active') {
+                    activePurchases.push(p);
+                } else {
+                    inactivePurchases.push(p);
+                }
+            });
+            
+            // Determine user's tier for badge
+            const hasLifetime = activePurchases.some(p => p.plan_type === 'lifetime');
+            const hasFullSuite = activePurchases.some(p => p.plan_type === 'full_suite');
+            const individualTools = activePurchases.filter(p => p.plan_type === 'individual_tool').length;
+            
+            showTierBadge(hasLifetime, hasFullSuite, individualTools);
+            
             let html = '<h3 style="margin-bottom: 20px;">Your Subscriptions</h3>';
             
-            Object.values(uniquePlans).forEach(purchase => {
-                const isActive = purchase.status === 'active';
-                const planName = purchase.plan_type === 'lifetime' ? 'Lifetime Access' :
-                                purchase.plan_type === 'full_suite' ? 'Full Suite' :
-                                `Individual Tool: ${formatToolName(purchase.tool_name)}`;
-                
-                const created = new Date(purchase.created_at).toLocaleDateString();
-                
-                html += `
-                    <div class="subscription-card ${isActive ? 'active' : ''}">
-                        <div class="subscription-header">
-                            <div class="subscription-title">${planName}</div>
-                            <span class="subscription-badge ${isActive ? 'badge-active' : 'badge-inactive'}">
-                                ${isActive ? 'Active' : 'Inactive'}
-                            </span>
-                        </div>
-                        <div class="subscription-details">
-                            <p><strong>Email:</strong> ${purchase.email}</p>
-                            <p><strong>Started:</strong> ${created}</p>
-                            ${purchase.paypal_subscription_id ? `<p><strong>Subscription ID:</strong> ${purchase.paypal_subscription_id}</p>` : ''}
-                        </div>
+            // Show active subscriptions first
+            if (activePurchases.length > 0) {
+                activePurchases.forEach(purchase => {
+                    html += renderSubscriptionCard(purchase, true);
+                });
+            }
+            
+            // Show inactive subscriptions (greyed out)
+            if (inactivePurchases.length > 0) {
+                html += '<h3 style="margin-top: 40px; margin-bottom: 20px; color: #718096;">Cancelled Subscriptions</h3>';
+                inactivePurchases.forEach(purchase => {
+                    html += renderSubscriptionCard(purchase, false);
+                });
+            }
+            
+            container.innerHTML = html;
+        }
+        
+        function showTierBadge(hasLifetime, hasFullSuite, individualCount) {
+            const badgeContainer = document.getElementById('tier-badge-container');
+            
+            if (hasLifetime) {
+                badgeContainer.innerHTML = `
+                    <div class="tier-badge badge-lifetime">
+                        ⭐ LIFETIME MEMBER ⭐
+                    </div>
+                `;
+            } else if (hasFullSuite) {
+                badgeContainer.innerHTML = `
+                    <div class="tier-badge badge-fullsuite">
+                        💎 FULL SUITE MEMBER 💎
+                    </div>
+                `;
+            } else if (individualCount > 0) {
+                badgeContainer.innerHTML = `
+                    <div class="tier-badge badge-individual">
+                        🎯 ACTIVE SUBSCRIBER
+                    </div>
+                `;
+            }
+        }
+        
+        function renderSubscriptionCard(purchase, isActive) {
+            const planName = purchase.plan_type === 'lifetime' ? 'Lifetime Access' :
+                            purchase.plan_type === 'full_suite' ? 'Full Suite' :
+                            `Individual Tool: ${formatToolName(purchase.tool_name)}`;
+            
+            const created = new Date(purchase.created_at).toLocaleDateString();
+            const statusClass = isActive ? 'active' : 'inactive';
+            const badgeClass = isActive ? 'badge-active' : 'badge-cancelled';
+            const statusText = isActive ? 'Active' : 'Cancelled';
+            
+            return `
+                <div class="subscription-card ${statusClass}" id="sub-${purchase.id}">
+                    <div class="subscription-header">
+                        <div class="subscription-title">${planName}</div>
+                        <span class="subscription-badge ${badgeClass}">
+                            ${statusText}
+                        </span>
+                    </div>
+                    <div class="subscription-details">
+                        <p><strong>Email:</strong> ${purchase.email || 'N/A'}</p>
+                        <p><strong>Started:</strong> ${created}</p>
+                        ${purchase.paypal_subscription_id ? `<p><strong>Subscription ID:</strong> ${purchase.paypal_subscription_id}</p>` : ''}
+                    </div>
+                    <div class="action-buttons">
                         ${isActive && purchase.paypal_subscription_id ? `
                             <button onclick="cancelSubscription('${purchase.paypal_subscription_id}')" class="btn btn-danger">
                                 Cancel Subscription
                             </button>
                         ` : ''}
+                        ${!isActive ? `
+                            <button onclick="removeFromView('${purchase.id}')" class="btn btn-secondary">
+                                Remove from View
+                            </button>
+                        ` : ''}
                     </div>
-                `;
-            });
-            
-            container.innerHTML = html;
+                </div>
+            `;
         }
         
         function formatToolName(toolName) {
@@ -248,6 +369,36 @@
             
             // Open PayPal subscriptions page
             window.open('https://www.paypal.com/myaccount/autopay/', '_blank');
+        }
+        
+        function removeFromView(purchaseId) {
+            if (!confirm('Remove this cancelled subscription from your account view? (This will not delete your purchase history)')) {
+                return;
+            }
+            
+            // Just hide it with animation
+            const card = document.getElementById('sub-' + purchaseId);
+            card.style.transition = 'all 0.5s ease';
+            card.style.opacity = '0';
+            card.style.transform = 'translateX(-20px)';
+            
+            setTimeout(() => {
+                card.remove();
+                
+                // Check if there are any subscriptions left
+                const container = document.getElementById('subscriptions-container');
+                const remainingCards = container.querySelectorAll('.subscription-card');
+                
+                if (remainingCards.length === 0) {
+                    container.innerHTML = `
+                        <div class="no-subscriptions">
+                            <h3>No Active Subscriptions</h3>
+                            <p>You don't have any subscriptions yet.</p>
+                            <a href="index.html#pricing" class="btn btn-primary" style="margin-top: 20px;">View Plans</a>
+                        </div>
+                    `;
+                }
+            }, 500);
         }
         
         document.addEventListener('DOMContentLoaded', loadAccount);
