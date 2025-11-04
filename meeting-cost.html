@@ -177,6 +177,20 @@
             margin: 20px 0;
         }
 
+        .watermark {
+            text-align: center;
+            margin-top: 20px;
+            padding: 15px;
+            background: var(--warning-bg);
+            border-radius: 6px;
+            color: var(--warning-text);
+            display: none;
+        }
+
+        .watermark.show {
+            display: block;
+        }
+
         @media (max-width: 768px) {
             .attendee-item {
                 grid-template-columns: 1fr;
@@ -244,6 +258,12 @@
                     </div>
                 </div>
             </div>
+
+            <div class="watermark" id="watermark-box">
+                <strong>🆓 Free Trial</strong><br>
+                <span id="uses-remaining-text">Uses remaining: 4</span><br>
+                <a href="index.html#pricing" style="color: #667eea;">Subscribe to remove limits</a>
+            </div>
         </div>
     </main>
 
@@ -255,6 +275,8 @@
 
     <script>
         let userHasAccess = false;
+        let isFreeTrial = false;
+        let usesRemaining = 0;
         let meetingInterval = null;
         let seconds = 0;
         let isRunning = false;
@@ -275,17 +297,56 @@
                     });
                 } else if (access.reason === 'free_trial') {
                     userHasAccess = true;
-                    if (access.usesRemaining <= 1) {
+                    isFreeTrial = true;
+                    usesRemaining = access.usesRemaining;
+                    
+                    // Show watermark for free trial
+                    document.getElementById('watermark-box').classList.add('show');
+                    document.getElementById('uses-remaining-text').textContent = `Uses remaining: ${usesRemaining}`;
+                    
+                    if (usesRemaining <= 1) {
                         setTimeout(() => {
-                            showUpgradeModal('meeting_cost', access.usesRemaining);
+                            showUpgradeModal('meeting_cost', usesRemaining);
                         }, 1000);
                     }
                 }
             } else {
                 userHasAccess = true;
+                isFreeTrial = false;
+                // Don't show watermark for paid users
+                document.getElementById('watermark-box').classList.remove('show');
                 console.log('User has full access to Meeting Cost Calculator!');
             }
         })();
+
+        async function checkAndIncrementUse() {
+            if (userHasAccess && !isFreeTrial) {
+                return true;
+            }
+            
+            const access = await checkToolAccess('meeting_cost');
+            
+            if (!access.hasAccess) {
+                showUpgradeModal('meeting_cost');
+                return false;
+            }
+            
+            if (access.reason === 'free_trial') {
+                incrementFreeUses('meeting_cost');
+                const newUses = getFreeUses('meeting_cost');
+                usesRemaining = 4 - newUses;
+                
+                document.getElementById('uses-remaining-text').textContent = `Uses remaining: ${usesRemaining}`;
+                
+                if (usesRemaining <= 1 && usesRemaining > 0) {
+                    setTimeout(() => {
+                        showUpgradeModal('meeting_cost', usesRemaining);
+                    }, 500);
+                }
+            }
+            
+            return true;
+        }
 
         // PRESET FUNCTIONS
         function getCurrentToolData() {
