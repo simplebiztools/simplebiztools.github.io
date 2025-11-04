@@ -7,14 +7,16 @@
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="auth-check.js"></script>
+    <script src="dark-mode.js"></script>
+    <script src="presets.js"></script>
     <style>
         .calculator-container {
             max-width: 800px;
             margin: 40px auto;
-            background: white;
+            background: var(--bg-card);
             padding: 40px;
             border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.07);
+            box-shadow: var(--shadow);
         }
 
         .attendee-list {
@@ -28,15 +30,18 @@
             align-items: center;
             margin-bottom: 15px;
             padding: 15px;
-            background: #f8f9fa;
+            background: var(--bg-primary);
             border-radius: 8px;
+            border: 1px solid var(--border-color);
         }
 
         .attendee-item input {
             padding: 10px;
-            border: 2px solid #e2e8f0;
+            border: 2px solid var(--border-color);
             border-radius: 6px;
             font-size: 1em;
+            background: var(--bg-card);
+            color: var(--text-primary);
         }
 
         .attendee-item input:focus {
@@ -156,8 +161,8 @@
         }
 
         .reset-btn {
-            background: #e2e8f0;
-            color: #2d3748;
+            background: var(--border-color);
+            color: var(--text-primary);
         }
 
         .reset-btn:hover {
@@ -168,7 +173,7 @@
             text-align: center;
             font-size: 2em;
             font-weight: bold;
-            color: #2d3748;
+            color: var(--text-primary);
             margin: 20px 0;
         }
 
@@ -196,8 +201,11 @@
             <p>See exactly how much your meetings cost based on attendee salaries.</p>
         </section>
 
+        <!-- Preset UI will be inserted here -->
+        <div id="preset-ui-container"></div>
+
         <div class="calculator-container">
-            <h3>Add Meeting Attendees</h3>
+            <h3 style="color: var(--text-primary);">Add Meeting Attendees</h3>
             
             <div class="attendee-list" id="attendee-list">
                 <div class="attendee-item">
@@ -278,6 +286,48 @@
                 console.log('User has full access to Meeting Cost Calculator!');
             }
         })();
+
+        // PRESET FUNCTIONS
+        function getCurrentToolData() {
+            const attendees = [];
+            document.querySelectorAll('.attendee-item').forEach(item => {
+                attendees.push({
+                    name: item.querySelector('.attendee-name').value,
+                    role: item.querySelector('.attendee-role').value,
+                    salary: item.querySelector('.attendee-salary').value
+                });
+            });
+            return { attendees };
+        }
+
+        function applyToolData(data) {
+            if (data.attendees) {
+                // Clear existing attendees
+                document.getElementById('attendee-list').innerHTML = '';
+                
+                // Add saved attendees
+                data.attendees.forEach(attendee => {
+                    const list = document.getElementById('attendee-list');
+                    const item = document.createElement('div');
+                    item.className = 'attendee-item';
+                    item.innerHTML = `
+                        <input type="text" placeholder="Name" class="attendee-name" value="${attendee.name}">
+                        <input type="text" placeholder="Role" class="attendee-role" value="${attendee.role}">
+                        <input type="number" placeholder="Salary ($)" class="attendee-salary" value="${attendee.salary}" oninput="updateCost()">
+                        <button class="remove-btn" onclick="removeAttendee(this)">Remove</button>
+                    `;
+                    list.appendChild(item);
+                });
+                
+                updateCost();
+            }
+        }
+
+        // Initialize presets UI
+        document.addEventListener('DOMContentLoaded', () => {
+            const presetUI = createPresetUI('meeting_cost', getCurrentToolData, applyToolData);
+            document.getElementById('preset-ui-container').appendChild(presetUI);
+        });
 
         function addAttendee() {
             const list = document.getElementById('attendee-list');
