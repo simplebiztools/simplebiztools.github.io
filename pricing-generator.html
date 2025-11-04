@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="auth-check.js"></script>
+    <script src="dark-mode.js"></script>
+    <script src="presets.js"></script>
     <style>
         .generator-container {
             display: grid;
@@ -16,10 +18,10 @@
         }
 
         .editor-panel {
-            background: white;
+            background: var(--bg-card);
             padding: 30px;
             border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.07);
+            box-shadow: var(--shadow);
         }
 
         .form-group {
@@ -30,17 +32,19 @@
             display: block;
             margin-bottom: 8px;
             font-weight: 600;
-            color: #2d3748;
+            color: var(--text-primary);
         }
 
         .form-group input,
         .form-group textarea {
             width: 100%;
             padding: 10px;
-            border: 2px solid #e2e8f0;
+            border: 2px solid var(--border-color);
             border-radius: 6px;
             font-size: 1em;
             font-family: inherit;
+            background: var(--bg-primary);
+            color: var(--text-primary);
         }
 
         .form-group input:focus,
@@ -50,20 +54,28 @@
         }
 
         .plan-editor {
-            border: 2px solid #e2e8f0;
+            border: 2px solid var(--border-color);
             padding: 20px;
             border-radius: 8px;
             margin-bottom: 20px;
-            background: #f8f9fa;
+            background: var(--bg-primary);
+        }
+
+        .plan-editor h4 {
+            color: var(--text-primary);
         }
 
         .preview-panel {
-            background: white;
+            background: var(--bg-card);
             padding: 30px;
             border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.07);
+            box-shadow: var(--shadow);
             position: sticky;
             top: 20px;
+        }
+
+        .preview-panel h3 {
+            color: var(--text-primary);
         }
 
         .pricing-preview {
@@ -73,8 +85,8 @@
         }
 
         .preview-card {
-            background: white;
-            border: 2px solid #e2e8f0;
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
             border-radius: 12px;
             padding: 30px;
             text-align: center;
@@ -91,7 +103,7 @@
         .preview-card h3 {
             font-size: 1.5em;
             margin-bottom: 10px;
-            color: #2d3748;
+            color: var(--text-primary);
         }
 
         .preview-card .plan-price {
@@ -103,7 +115,7 @@
 
         .preview-card .plan-price span {
             font-size: 0.4em;
-            color: #718096;
+            color: var(--text-secondary);
         }
 
         .preview-card ul {
@@ -114,8 +126,8 @@
 
         .preview-card ul li {
             padding: 8px 0;
-            color: #718096;
-            border-bottom: 1px solid #e2e8f0;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border-color);
         }
 
         .preview-card ul li:before {
@@ -166,8 +178,8 @@
         }
 
         .btn-secondary {
-            background: #e2e8f0;
-            color: #2d3748;
+            background: var(--border-color);
+            color: var(--text-primary);
         }
 
         .btn-secondary:hover {
@@ -178,9 +190,9 @@
             text-align: center;
             margin-top: 20px;
             padding: 15px;
-            background: #fff3cd;
+            background: var(--warning-bg);
             border-radius: 6px;
-            color: #856404;
+            color: var(--warning-text);
         }
 
         @media (max-width: 968px) {
@@ -207,9 +219,12 @@
             <p>Design professional pricing tables in minutes. No coding required.</p>
         </section>
 
+        <!-- Preset UI will be inserted here -->
+        <div id="preset-ui-container"></div>
+
         <div class="generator-container">
             <div class="editor-panel">
-                <h3>Customize Your Plans</h3>
+                <h3 style="color: var(--text-primary);">Customize Your Plans</h3>
                 
                 <div class="plan-editor">
                     <h4>Plan 1</h4>
@@ -328,7 +343,6 @@ White Label Option</textarea>
             if (!access.hasAccess) {
                 if (access.reason === 'limit_reached') {
                     showUpgradeModal('pricing_generator');
-                    // Disable the tool
                     document.querySelectorAll('input, textarea, button').forEach(el => {
                         if (!el.closest('#upgrade-modal')) {
                             el.disabled = true;
@@ -337,7 +351,6 @@ White Label Option</textarea>
                         }
                     });
                 } else if (access.reason === 'free_trial') {
-                    // Show remaining uses but allow access
                     userHasAccess = true;
                     if (access.usesRemaining <= 1) {
                         setTimeout(() => {
@@ -346,14 +359,12 @@ White Label Option</textarea>
                     }
                 }
             } else {
-                // Has paid access
                 userHasAccess = true;
-                console.log('User has full access!');
+                console.log('User has full access to Pricing Generator!');
             }
         })();
 
         async function checkAndIncrementUse() {
-            // If already checked and has access, allow
             if (userHasAccess) {
                 return true;
             }
@@ -365,7 +376,6 @@ White Label Option</textarea>
                 return false;
             }
             
-            // Increment free use
             if (access.reason === 'free_trial') {
                 incrementFreeUses('pricing_generator');
                 const newUses = getFreeUses('pricing_generator');
@@ -380,6 +390,64 @@ White Label Option</textarea>
             
             return true;
         }
+
+        // PRESET FUNCTIONS
+        function getCurrentToolData() {
+            return {
+                plan1: {
+                    name: document.getElementById('plan1-name').value,
+                    price: document.getElementById('plan1-price').value,
+                    period: document.getElementById('plan1-period').value,
+                    button: document.getElementById('plan1-button').value,
+                    features: document.getElementById('plan1-features').value
+                },
+                plan2: {
+                    name: document.getElementById('plan2-name').value,
+                    price: document.getElementById('plan2-price').value,
+                    period: document.getElementById('plan2-period').value,
+                    button: document.getElementById('plan2-button').value,
+                    features: document.getElementById('plan2-features').value
+                },
+                plan3: {
+                    name: document.getElementById('plan3-name').value,
+                    price: document.getElementById('plan3-price').value,
+                    period: document.getElementById('plan3-period').value,
+                    button: document.getElementById('plan3-button').value,
+                    features: document.getElementById('plan3-features').value
+                }
+            };
+        }
+
+        function applyToolData(data) {
+            if (data.plan1) {
+                document.getElementById('plan1-name').value = data.plan1.name;
+                document.getElementById('plan1-price').value = data.plan1.price;
+                document.getElementById('plan1-period').value = data.plan1.period;
+                document.getElementById('plan1-button').value = data.plan1.button;
+                document.getElementById('plan1-features').value = data.plan1.features;
+            }
+            if (data.plan2) {
+                document.getElementById('plan2-name').value = data.plan2.name;
+                document.getElementById('plan2-price').value = data.plan2.price;
+                document.getElementById('plan2-period').value = data.plan2.period;
+                document.getElementById('plan2-button').value = data.plan2.button;
+                document.getElementById('plan2-features').value = data.plan2.features;
+            }
+            if (data.plan3) {
+                document.getElementById('plan3-name').value = data.plan3.name;
+                document.getElementById('plan3-price').value = data.plan3.price;
+                document.getElementById('plan3-period').value = data.plan3.period;
+                document.getElementById('plan3-button').value = data.plan3.button;
+                document.getElementById('plan3-features').value = data.plan3.features;
+            }
+            updatePreview();
+        }
+
+        // Initialize presets UI
+        document.addEventListener('DOMContentLoaded', () => {
+            const presetUI = createPresetUI('pricing_generator', getCurrentToolData, applyToolData);
+            document.getElementById('preset-ui-container').appendChild(presetUI);
+        });
 
         function updatePreview() {
             const preview = document.getElementById('pricing-preview');
