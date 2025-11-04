@@ -294,15 +294,21 @@ function createPresetUI(toolName, getCurrentDataFn, applyDataFn) {
         exportPresets(toolName);
     };
     
-    // Populate preset list
-    refreshPresetList(toolName);
+    // Populate preset list after a small delay to ensure DOM is ready
+    setTimeout(() => {
+        refreshPresetList(toolName);
+    }, 100);
     
     return container;
 }
 
 function refreshPresetList(toolName) {
     const select = document.getElementById(`preset-select-${toolName}`);
-    if (!select) return;
+    if (!select) {
+        console.log('Select element not found yet, retrying...');
+        setTimeout(() => refreshPresetList(toolName), 100);
+        return;
+    }
     
     const presets = getPresets(toolName);
     
