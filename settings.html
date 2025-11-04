@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - SimpleBizTools</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="auth-check.js"></script>
+    <script src="dark-mode.js"></script>
+    <style>
+        .settings-container {
+            max-width: 900px;
+            margin: 40px auto;
+            background: var(--bg-card);
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+        }
+        
+        .settings-header {
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .settings-section {
+            background: var(--bg-primary);
+            padding: 25px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            border: 2px solid var(--border-color);
+        }
+        
+        .settings-section h3 {
+            color: var(--text-primary);
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+        
+        .settings-section p {
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+        
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: var(--bg-card);
+            border-radius: 6px;
+            margin-bottom: 10px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .setting-label {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .setting-description {
+            font-size: 0.9em;
+            color: var(--text-secondary);
+            margin-top: 5px;
+        }
+        
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 26px;
+            background: var(--border-color);
+            border-radius: 50px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .toggle-switch.active {
+            background: #48bb78;
+        }
+        
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            background: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: left 0.3s;
+        }
+        
+        .toggle-switch.active::after {
+            left: 26px;
+        }
+        
+        .hidden-sub-card {
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .hidden-sub-info {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .hidden-sub-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 5px;
+        }
+        
+        .hidden-sub-details {
+            font-size: 0.9em;
+            color: var(--text-secondary);
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+        
+        .btn-secondary {
+            background: var(--border-color);
+            color: var(--text-primary);
+        }
+        
+        .btn-secondary:hover {
+            background: #cbd5e0;
+        }
+        
+        .btn-danger {
+            background: #fc8181;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #f56565;
+        }
+        
+        .btn-success {
+            background: #48bb78;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #38a169;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+        
+        .account-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .info-card {
+            background: var(--bg-card);
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .info-label {
+            font-size: 0.9em;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+        }
+        
+        .info-value {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 1.1em;
+        }
+
+        @media (max-width: 768px) {
+            .settings-container {
+                padding: 20px;
+            }
+            
+            .setting-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            
+            .hidden-sub-card {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1><a href="index.html" style="color: white; text-decoration: none;">SimpleBizTools</a></h1>
+            <p class="tagline">Settings</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="settings-container">
+            <div class="settings-header">
+                <h2 style="color: var(--text-primary);">⚙️ Account Settings</h2>
+                <p style="color: var(--text-secondary);">Manage your preferences and account information</p>
+            </div>
+
+            <!-- Account Information -->
+            <div class="settings-section">
+                <h3>👤 Account Information</h3>
+                <div class="account-info">
+                    <div class="info-card">
+                        <div class="info-label">Email Address</div>
+                        <div class="info-value" id="user-email">Loading...</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-label">Account Tier</div>
+                        <div class="info-value" id="user-tier">Loading...</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-label">Member Since</div>
+                        <div class="info-value" id="member-since">Loading...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Preferences -->
+            <div class="settings-section">
+                <h3>🎨 Preferences</h3>
+                <p>Customize your experience</p>
+                
+                <div class="setting-item">
+                    <div>
+                        <div class="setting-label">Dark Mode</div>
+                        <div class="setting-description">Toggle between light and dark theme</div>
+                    </div>
+                    <div class="toggle-switch" id="dark-mode-toggle-setting" onclick="toggleDarkModeSetting()"></div>
+                </div>
+                
+                <div class="setting-item">
+                    <div>
+                        <div class="setting-label">Auto-Save Tools</div>
+                        <div class="setting-description">Automatically save tool configurations (Coming Soon)</div>
+                    </div>
+                    <div class="toggle-switch" id="auto-save-toggle"></div>
+                </div>
+            </div>
+
+            <!-- Hidden Subscriptions -->
+            <div class="settings-section">
+                <h3>👁️ Hidden Subscriptions</h3>
+                <p>Manage subscriptions you've hidden from your account page</p>
+                
+                <div id="hidden-subs-container">
+                    <div class="empty-state">
+                        <p>Loading hidden subscriptions...</p>
+                    </div>
+                </div>
+                
+                <button onclick="clearAllHidden()" class="btn btn-danger" style="margin-top: 15px;" id="clear-all-btn">
+                    Clear All Hidden Subscriptions
+                </button>
+            </div>
+
+            <!-- Support -->
+            <div class="settings-section">
+                <h3>💬 Support & Help</h3>
+                <p>Need assistance? We're here to help!</p>
+                
+                <a href="mailto:SimpleBizTools101@gmail.com" class="btn btn-primary" style="margin-right: 10px;">
+                    📧 Contact Support
+                </a>
+                <a href="index.html#contact" class="btn btn-secondary">
+                    View FAQs
+                </a>
+            </div>
+
+            <!-- Back to Account -->
+            <div style="margin-top: 40px; padding-top: 20px; border-top: 2px solid var(--border-color); text-align: center;">
+                <a href="account.html" class="btn btn-primary">← Back to Account</a>
+                <a href="index.html" class="btn btn-secondary">Home</a>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 SimpleBizTools.</p>
+        </div>
+    </footer>
+
+    <script>
+        let userEmail = '';
+        
+        // Get hidden subscriptions from localStorage
+        function getHiddenSubscriptions() {
+            const hidden = localStorage.getItem('hiddenSubscriptions');
+            return hidden ? JSON.parse(hidden) : [];
+        }
+
+        // Remove subscription from hidden list
+        function unhideSubscription(subId) {
+            let hidden = getHiddenSubscriptions();
+            hidden = hidden.filter(id => id !== subId);
+            localStorage.setItem('hiddenSubscriptions', JSON.stringify(hidden));
+        }
+
+        // Clear all hidden subscriptions
+        function clearAllHidden() {
+            if (!confirm('Are you sure you want to unhide all cancelled subscriptions? They will appear on your account page again.')) {
+                return;
+            }
+            
+            localStorage.removeItem('hiddenSubscriptions');
+            alert('✅ All hidden subscriptions have been restored!');
+            loadHiddenSubscriptions();
+        }
+
+        function toggleDarkModeSetting() {
+            toggleTheme(); // From dark-mode.js
+            updateDarkModeToggle();
+        }
+
+        function updateDarkModeToggle() {
+            const toggle = document.getElementById('dark-mode-toggle-setting');
+            const currentTheme = getThemePreference(); // From dark-mode.js
+            
+            if (currentTheme === 'dark') {
+                toggle.classList.add('active');
+            } else {
+                toggle.classList.remove('active');
+            }
+        }
+
+        async function loadAccountInfo() {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            
+            if (!session) {
+                window.location.href = 'auth.html';
+                return;
+            }
+            
+            userEmail = session.user.email;
+            document.getElementById('user-email').textContent = userEmail;
+            
+            // Get user's first purchase date
+            const { data: purchases } = await supabaseClient
+                .from('user_purchases')
+                .select('created_at')
+                .eq('email', userEmail)
+                .order('created_at', { ascending: true })
+                .limit(1);
+            
+            if (purchases && purchases.length > 0) {
+                const memberSince = new Date(purchases[0].created_at).toLocaleDateString('en-US', { 
+                    month: 'long', 
+                    year: 'numeric' 
+                });
+                document.getElementById('member-since').textContent = memberSince;
+            } else {
+                document.getElementById('member-since').textContent = 'New Member';
+            }
+            
+            // Get user's tier
+            const { data: activePurchases } = await supabaseClient
+                .from('user_purchases')
+                .select('*')
+                .eq('email', userEmail)
+                .eq('status', 'active');
+            
+            let tier = 'Free User';
+            if (activePurchases && activePurchases.length > 0) {
+                const hasLifetime = activePurchases.some(p => p.plan_type === 'lifetime');
+                const hasFullSuite = activePurchases.some(p => p.plan_type === 'full_suite');
+                
+                if (hasLifetime) {
+                    tier = '⭐ Lifetime Member';
+                } else if (hasFullSuite) {
+                    tier = '💎 Full Suite';
+                } else {
+                    tier = '🎯 Individual Tools';
+                }
+            }
+            
+            document.getElementById('user-tier').textContent = tier;
+        }
+
+        async function loadHiddenSubscriptions() {
+            const hiddenIds = getHiddenSubscriptions();
+            const container = document.getElementById('hidden-subs-container');
+            
+            if (hiddenIds.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <p>No hidden subscriptions</p>
+                    </div>
+                `;
+                document.getElementById('clear-all-btn').style.display = 'none';
+                return;
+            }
+            
+            document.getElementById('clear-all-btn').style.display = 'inline-block';
+            
+            // Fetch subscription details
+            const { data: purchases } = await supabaseClient
+                .from('user_purchases')
+                .select('*')
+                .in('id', hiddenIds);
+            
+            if (!purchases || purchases.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <p>No hidden subscriptions found</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            purchases.forEach(purchase => {
+                const planName = purchase.plan_type === 'lifetime' ? 'Lifetime Access' :
+                                purchase.plan_type === 'full_suite' ? 'Full Suite' :
+                                `Individual Tool: ${formatToolName(purchase.tool_name)}`;
+                
+                const created = new Date(purchase.created_at).toLocaleDateString();
+                
+                html += `
+                    <div class="hidden-sub-card" id="hidden-${purchase.id}">
+                        <div class="hidden-sub-info">
+                            <div class="hidden-sub-title">${planName}</div>
+                            <div class="hidden-sub-details">
+                                Status: ${purchase.status} • Started: ${created}
+                            </div>
+                        </div>
+                        <button onclick="restoreSubscription('${purchase.id}')" class="btn btn-success">
+                            Unhide
+                        </button>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        function restoreSubscription(subId) {
+            unhideSubscription(subId);
+            
+            // Animate removal
+            const card = document.getElementById('hidden-' + subId);
+            card.style.transition = 'all 0.3s ease';
+            card.style.opacity = '0';
+            card.style.transform = 'translateX(20px)';
+            
+            setTimeout(() => {
+                card.remove();
+                
+                // Check if any remain
+                const remaining = document.querySelectorAll('.hidden-sub-card');
+                if (remaining.length === 0) {
+                    loadHiddenSubscriptions();
+                }
+            }, 300);
+            
+            alert('✅ Subscription unhidden! It will now appear on your account page.');
+        }
+
+        function formatToolName(toolName) {
+            if (!toolName) return 'Unknown';
+            const names = {
+                'pricing_generator': 'Pricing Table Generator',
+                'meeting_cost': 'Meeting Cost Calculator',
+                'timezone_converter': 'Team Timezone Converter'
+            };
+            return names[toolName] || toolName;
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', () => {
+            loadAccountInfo();
+            loadHiddenSubscriptions();
+            updateDarkModeToggle();
+        });
+    </script>
+</body>
+</html>
