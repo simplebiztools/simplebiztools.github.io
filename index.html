@@ -285,6 +285,11 @@
                 'timezone_converter': '🌍 Team Timezone Converter'
             };
             
+            // Clear containers first
+            document.getElementById('individual-paypal-container').innerHTML = '';
+            document.getElementById('fullsuite-paypal-container').innerHTML = '';
+            document.getElementById('lifetime-paypal-container').innerHTML = '';
+            
             // Individual tool section
             if (userSubscriptions.hasLifetime || userSubscriptions.hasFullSuite) {
                 document.getElementById('individual-card').style.opacity = '0.5';
