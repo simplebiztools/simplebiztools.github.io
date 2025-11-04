@@ -7,18 +7,19 @@
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="auth-check.js"></script>
+    <script src="dark-mode.js"></script>
     <style>
         .account-container {
             max-width: 800px;
             margin: 40px auto;
-            background: white;
+            background: var(--bg-card);
             padding: 40px;
             border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.07);
+            box-shadow: var(--shadow);
         }
         
         .account-header {
-            border-bottom: 2px solid #e2e8f0;
+            border-bottom: 2px solid var(--border-color);
             padding-bottom: 20px;
             margin-bottom: 30px;
             text-align: center;
@@ -49,9 +50,17 @@
             color: white;
         }
         
+        .top-actions {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
         .subscription-card {
-            background: #f8f9fa;
-            border: 2px solid #e2e8f0;
+            background: var(--bg-primary);
+            border: 2px solid var(--border-color);
             border-radius: 8px;
             padding: 20px;
             margin-bottom: 20px;
@@ -60,12 +69,12 @@
         
         .subscription-card.active {
             border-color: #48bb78;
-            background: #f0fff4;
+            background: var(--bg-card);
         }
         
         .subscription-card.inactive {
             border-color: #fc8181;
-            background: #fff5f5;
+            background: var(--bg-primary);
             opacity: 0.7;
         }
         
@@ -74,12 +83,14 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
         }
         
         .subscription-title {
             font-size: 1.3em;
             font-weight: 600;
-            color: #2d3748;
+            color: var(--text-primary);
         }
         
         .subscription-badge {
@@ -100,7 +111,7 @@
         }
         
         .subscription-details {
-            color: #718096;
+            color: var(--text-secondary);
             margin-bottom: 15px;
         }
         
@@ -117,6 +128,7 @@
             text-decoration: none;
             display: inline-block;
             margin-right: 10px;
+            margin-top: 5px;
             transition: all 0.3s ease;
         }
         
@@ -130,8 +142,8 @@
         }
         
         .btn-secondary {
-            background: #e2e8f0;
-            color: #2d3748;
+            background: var(--border-color);
+            color: var(--text-primary);
         }
         
         .btn-secondary:hover {
@@ -150,19 +162,59 @@
         .no-subscriptions {
             text-align: center;
             padding: 60px 20px;
-            color: #718096;
+            color: var(--text-secondary);
         }
         
         .loading {
             text-align: center;
             padding: 60px;
-            color: #718096;
+            color: var(--text-secondary);
         }
         
         .action-buttons {
             display: flex;
             gap: 10px;
             margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .settings-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
+            text-decoration: none;
+            color: var(--text-primary);
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .settings-link:hover {
+            background: var(--border-color);
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 768px) {
+            .account-container {
+                padding: 20px;
+            }
+            
+            .subscription-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+                text-align: center;
+            }
         }
     </style>
 </head>
@@ -179,14 +231,20 @@
             <div class="account-header">
                 <div id="tier-badge-container"></div>
                 <h2 id="user-email-display">Loading...</h2>
-                <p style="color: #718096;">Manage your subscriptions and account settings</p>
+                <p style="color: var(--text-secondary);">Manage your subscriptions and account settings</p>
+                
+                <div class="top-actions">
+                    <a href="settings.html" class="settings-link">
+                        ⚙️ Settings
+                    </a>
+                </div>
             </div>
             
             <div id="subscriptions-container" class="loading">
                 <p>Loading your subscriptions...</p>
             </div>
             
-            <div style="margin-top: 40px; padding-top: 20px; border-top: 2px solid #e2e8f0; text-align: center;">
+            <div style="margin-top: 40px; padding-top: 20px; border-top: 2px solid var(--border-color); text-align: center;">
                 <a href="index.html" class="btn btn-primary">← Back to Home</a>
                 <button onclick="handleLogout()" class="btn btn-danger">Sign Out</button>
             </div>
@@ -200,6 +258,21 @@
     </footer>
 
     <script>
+        // Get hidden subscriptions from localStorage
+        function getHiddenSubscriptions() {
+            const hidden = localStorage.getItem('hiddenSubscriptions');
+            return hidden ? JSON.parse(hidden) : [];
+        }
+
+        // Add subscription to hidden list
+        function hideSubscription(subId) {
+            const hidden = getHiddenSubscriptions();
+            if (!hidden.includes(subId)) {
+                hidden.push(subId);
+                localStorage.setItem('hiddenSubscriptions', JSON.stringify(hidden));
+            }
+        }
+
         async function loadAccount() {
             const { data: { session } } = await supabaseClient.auth.getSession();
             
@@ -239,9 +312,26 @@
                 return;
             }
             
+            // Get hidden subscriptions
+            const hiddenIds = getHiddenSubscriptions();
+            
+            // Filter out hidden ones
+            const visiblePurchases = purchases.filter(p => !hiddenIds.includes(p.id));
+            
+            if (visiblePurchases.length === 0) {
+                container.innerHTML = `
+                    <div class="no-subscriptions">
+                        <h3>No Visible Subscriptions</h3>
+                        <p>All subscriptions are hidden. <a href="settings.html" style="color: #667eea;">View in Settings</a></p>
+                        <a href="index.html#pricing" class="btn btn-primary" style="margin-top: 20px;">View Plans</a>
+                    </div>
+                `;
+                return;
+            }
+            
             // Group by plan type and tool to avoid showing duplicates
             const uniquePlans = {};
-            purchases.forEach(p => {
+            visiblePurchases.forEach(p => {
                 const key = `${p.plan_type}_${p.tool_name || 'all'}_${p.status}`;
                 if (!uniquePlans[key] || new Date(p.created_at) > new Date(uniquePlans[key].created_at)) {
                     uniquePlans[key] = p;
@@ -267,7 +357,7 @@
             
             showTierBadge(hasLifetime, hasFullSuite, individualTools);
             
-            let html = '<h3 style="margin-bottom: 20px;">Your Subscriptions</h3>';
+            let html = '<h3 style="margin-bottom: 20px; color: var(--text-primary);">Your Subscriptions</h3>';
             
             // Show active subscriptions first
             if (activePurchases.length > 0) {
@@ -278,7 +368,7 @@
             
             // Show inactive subscriptions (greyed out)
             if (inactivePurchases.length > 0) {
-                html += '<h3 style="margin-top: 40px; margin-bottom: 20px; color: #718096;">Cancelled Subscriptions</h3>';
+                html += '<h3 style="margin-top: 40px; margin-bottom: 20px; color: var(--text-secondary);">Cancelled Subscriptions</h3>';
                 inactivePurchases.forEach(purchase => {
                     html += renderSubscriptionCard(purchase, false);
                 });
@@ -342,7 +432,7 @@
                         ` : ''}
                         ${!isActive ? `
                             <button onclick="removeFromView('${purchase.id}')" class="btn btn-secondary">
-                                Remove from View
+                                Hide from View
                             </button>
                         ` : ''}
                     </div>
@@ -372,11 +462,14 @@
         }
         
         function removeFromView(purchaseId) {
-            if (!confirm('Remove this cancelled subscription from your account view? (This will not delete your purchase history)')) {
+            if (!confirm('Hide this cancelled subscription? You can view hidden subscriptions in Settings.')) {
                 return;
             }
             
-            // Just hide it with animation
+            // Add to hidden list
+            hideSubscription(purchaseId);
+            
+            // Animate and remove
             const card = document.getElementById('sub-' + purchaseId);
             card.style.transition = 'all 0.5s ease';
             card.style.opacity = '0';
@@ -392,8 +485,8 @@
                 if (remainingCards.length === 0) {
                     container.innerHTML = `
                         <div class="no-subscriptions">
-                            <h3>No Active Subscriptions</h3>
-                            <p>You don't have any subscriptions yet.</p>
+                            <h3>No Visible Subscriptions</h3>
+                            <p>All subscriptions are hidden. <a href="settings.html" style="color: #667eea;">View in Settings</a></p>
                             <a href="index.html#pricing" class="btn btn-primary" style="margin-top: 20px;">View Plans</a>
                         </div>
                     `;
