@@ -7,14 +7,16 @@
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="auth-check.js"></script>
+    <script src="dark-mode.js"></script>
+    <script src="presets.js"></script>
     <style>
         .timezone-container {
             max-width: 900px;
             margin: 40px auto;
-            background: white;
+            background: var(--bg-card);
             padding: 40px;
             border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.07);
+            box-shadow: var(--shadow);
         }
 
         .team-member {
@@ -23,17 +25,20 @@
             gap: 15px;
             align-items: center;
             padding: 20px;
-            background: #f8f9fa;
+            background: var(--bg-primary);
             border-radius: 8px;
             margin-bottom: 15px;
+            border: 1px solid var(--border-color);
         }
 
         .team-member input,
         .team-member select {
             padding: 10px;
-            border: 2px solid #e2e8f0;
+            border: 2px solid var(--border-color);
             border-radius: 6px;
             font-size: 1em;
+            background: var(--bg-card);
+            color: var(--text-primary);
         }
 
         .team-member input:focus,
@@ -51,7 +56,7 @@
 
         .time-indicator {
             font-size: 0.9em;
-            color: #718096;
+            color: var(--text-secondary);
             margin-top: 5px;
         }
 
@@ -70,6 +75,20 @@
 
         .add-member-btn:hover {
             background: #5568d3;
+        }
+
+        .remove-btn {
+            background: #fc8181;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .remove-btn:hover {
+            background: #f56565;
         }
 
         .current-time-banner {
@@ -137,6 +156,9 @@
             <p>See what time it is for everyone on your distributed team.</p>
         </section>
 
+        <!-- Preset UI will be inserted here -->
+        <div id="preset-ui-container"></div>
+
         <div class="timezone-container">
             <div class="current-time-banner">
                 <h2>Your Current Time</h2>
@@ -144,7 +166,7 @@
                 <div class="time-indicator" id="your-timezone">Loading...</div>
             </div>
 
-            <h3>Team Members</h3>
+            <h3 style="color: var(--text-primary);">Team Members</h3>
             
             <div id="team-list">
                 <div class="team-member">
@@ -213,7 +235,71 @@
             }
         })();
 
+        // PRESET FUNCTIONS
+        function getCurrentToolData() {
+            const members = [];
+            document.querySelectorAll('.team-member').forEach(item => {
+                members.push({
+                    name: item.querySelector('.member-name').value,
+                    role: item.querySelector('.member-role').value,
+                    timezone: item.querySelector('.member-timezone').value
+                });
+            });
+            return { members };
+        }
+
+        function applyToolData(data) {
+            if (data.members) {
+                // Clear existing members
+                document.getElementById('team-list').innerHTML = '';
+                
+                // Add saved members
+                data.members.forEach(member => {
+                    const list = document.getElementById('team-list');
+                    const item = document.createElement('div');
+                    item.className = 'team-member';
+                    item.innerHTML = `
+                        <input type="text" placeholder="Name" class="member-name" value="${member.name}">
+                        <input type="text" placeholder="Role" class="member-role" value="${member.role}">
+                        <select class="member-timezone" onchange="updateTimes()">
+                            <option value="America/New_York">Eastern Time (ET)</option>
+                            <option value="America/Chicago">Central Time (CT)</option>
+                            <option value="America/Denver">Mountain Time (MT)</option>
+                            <option value="America/Los_Angeles">Pacific Time (PT)</option>
+                            <option value="Europe/London">London (GMT)</option>
+                            <option value="Europe/Paris">Paris (CET)</option>
+                            <option value="Europe/Berlin">Berlin (CET)</option>
+                            <option value="Asia/Tokyo">Tokyo (JST)</option>
+                            <option value="Asia/Shanghai">Shanghai (CST)</option>
+                            <option value="Asia/Singapore">Singapore (SGT)</option>
+                            <option value="Asia/Dubai">Dubai (GST)</option>
+                            <option value="Australia/Sydney">Sydney (AEDT)</option>
+                        </select>
+                        <div class="time-info">
+                            <div class="time-display member-time">--:--</div>
+                            <div class="time-indicator member-status"></div>
+                        </div>
+                        <button class="remove-btn" onclick="removeMember(this)">Remove</button>
+                    `;
+                    
+                    // Set the correct timezone
+                    item.querySelector('.member-timezone').value = member.timezone;
+                    
+                    list.appendChild(item);
+                });
+                
+                updateTimes();
+            }
+        }
+
+        // Initialize presets UI
+        document.addEventListener('DOMContentLoaded', () => {
+            const presetUI = createPresetUI('timezone_converter', getCurrentToolData, applyToolData);
+            document.getElementById('preset-ui-container').appendChild(presetUI);
+        });
+
         function updateTimes() {
+            // Update your time
             const now = new Date();
             const yourTimeStr = now.toLocaleTimeString('en-US', { 
                 hour: '2-digit', 
@@ -224,6 +310,7 @@
             document.getElementById('your-timezone').textContent = 
                 Intl.DateTimeFormat().resolvedOptions().timeZone;
 
+            // Update team member times
             document.querySelectorAll('.team-member').forEach(member => {
                 const timezone = member.querySelector('.member-timezone').value;
                 const timeDisplay = member.querySelector('.member-time');
@@ -292,9 +379,14 @@
         }
 
         function removeMember(btn) {
-            btn.closest('.team-member').remove();
+            if (document.querySelectorAll('.team-member').length > 1) {
+                btn.closest('.team-member').remove();
+            } else {
+                alert('You need at least one team member!');
+            }
         }
 
+        // Update times every second
         setInterval(updateTimes, 1000);
         updateTimes();
     </script>
