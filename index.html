@@ -27,19 +27,19 @@
             <div class="tool-card">
                 <h3>📊 Pricing Table Generator</h3>
                 <p>Create beautiful, responsive pricing tables for your website in minutes.</p>
-                <a href="pricing-generator.html" class="btn">Try it Free</a>
+                <a href="pricing-generator.html" class="btn" id="btn-pricing-generator">Loading...</a>
             </div>
 
             <div class="tool-card">
                 <h3>💰 Meeting Cost Calculator</h3>
                 <p>See the real-time cost of your meetings based on attendee salaries.</p>
-                <a href="meeting-cost.html" class="btn">Calculate Now</a>
+                <a href="meeting-cost.html" class="btn" id="btn-meeting-cost">Loading...</a>
             </div>
 
             <div class="tool-card">
                 <h3>🌍 Team Timezone Converter</h3>
                 <p>See what time it is for your entire distributed team.</p>
-                <a href="timezones.html" class="btn">View Tool</a>
+                <a href="timezones.html" class="btn" id="btn-timezone-converter">Loading...</a>
             </div>
 
             <div class="tool-card premium" id="full-suite-card">
@@ -156,6 +156,38 @@
             ownedTools: []
         };
 
+        // Update tool button text based on access
+        async function updateToolButtons() {
+            const tools = [
+                { key: 'pricing_generator', btnId: 'btn-pricing-generator', defaultText: 'Try it Free' },
+                { key: 'meeting_cost', btnId: 'btn-meeting-cost', defaultText: 'Try it Free' },
+                { key: 'timezone_converter', btnId: 'btn-timezone-converter', defaultText: 'Try it Free' }
+            ];
+
+            for (const tool of tools) {
+                const btn = document.getElementById(tool.btnId);
+                const access = await checkToolAccess(tool.key);
+                
+                if (access.hasAccess && access.reason !== 'free_trial') {
+                    // User has paid access
+                    btn.textContent = 'Open Tool';
+                    btn.style.background = '#48bb78';
+                } else if (access.reason === 'free_trial') {
+                    // User has free trials remaining
+                    const uses = getFreeUses(tool.key);
+                    const remaining = 4 - uses;
+                    btn.textContent = `Try it Free (${remaining} left)`;
+                } else if (access.reason === 'limit_reached') {
+                    // Free trials exhausted
+                    btn.textContent = 'Subscribe to Access';
+                    btn.style.background = '#fc8181';
+                } else {
+                    // Default state
+                    btn.textContent = tool.defaultText;
+                }
+            }
+        }
+
         async function initializePricing() {
             if (buttonsRendered) {
                 console.log('Buttons already rendered, skipping...');
@@ -164,6 +196,9 @@
             
             console.log('Initializing pricing...');
             const { data: { session }, error } = await supabaseClient.auth.getSession();
+            
+            // Update tool buttons regardless of login status
+            await updateToolButtons();
             
             if (!session) {
                 console.log('Not logged in');
