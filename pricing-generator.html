@@ -193,6 +193,11 @@
             background: var(--warning-bg);
             border-radius: 6px;
             color: var(--warning-text);
+            display: none;
+        }
+
+        .watermark.show {
+            display: block;
         }
 
         @media (max-width: 968px) {
@@ -319,9 +324,10 @@ White Label Option</textarea>
                 <div id="pricing-preview" class="pricing-preview">
                     <!-- Preview will be generated here -->
                 </div>
-                <div class="watermark">
-                    <strong>🔒 Free Version</strong><br>
-                    Remove watermark for $10 - <a href="#" style="color: #667eea;">Upgrade Now</a>
+                <div class="watermark" id="watermark-box">
+                    <strong>🆓 Free Trial</strong><br>
+                    <span id="uses-remaining-text">Uses remaining: 4</span><br>
+                    <a href="index.html#pricing" style="color: #667eea;">Subscribe to remove limits</a>
                 </div>
             </div>
         </div>
@@ -329,12 +335,14 @@ White Label Option</textarea>
 
     <footer>
         <div class="container">
-            <p>&copy; 2024 SimpleBizTools. <a href="index.html" style="color: white;">Back to Home</a></p>
+            <p>&copy; 2025 SimpleBizTools. <a href="index.html" style="color: white;">Back to Home</a></p>
         </div>
     </footer>
 
     <script>
         let userHasAccess = false;
+        let isFreeTrial = false;
+        let usesRemaining = 0;
 
         // Check access on page load
         (async function() {
@@ -352,20 +360,30 @@ White Label Option</textarea>
                     });
                 } else if (access.reason === 'free_trial') {
                     userHasAccess = true;
-                    if (access.usesRemaining <= 1) {
+                    isFreeTrial = true;
+                    usesRemaining = access.usesRemaining;
+                    
+                    // Show watermark for free trial
+                    document.getElementById('watermark-box').classList.add('show');
+                    document.getElementById('uses-remaining-text').textContent = `Uses remaining: ${usesRemaining}`;
+                    
+                    if (usesRemaining <= 1) {
                         setTimeout(() => {
-                            showUpgradeModal('pricing_generator', access.usesRemaining);
+                            showUpgradeModal('pricing_generator', usesRemaining);
                         }, 1000);
                     }
                 }
             } else {
                 userHasAccess = true;
+                isFreeTrial = false;
+                // Don't show watermark for paid users
+                document.getElementById('watermark-box').classList.remove('show');
                 console.log('User has full access to Pricing Generator!');
             }
         })();
 
         async function checkAndIncrementUse() {
-            if (userHasAccess) {
+            if (userHasAccess && !isFreeTrial) {
                 return true;
             }
             
@@ -379,11 +397,13 @@ White Label Option</textarea>
             if (access.reason === 'free_trial') {
                 incrementFreeUses('pricing_generator');
                 const newUses = getFreeUses('pricing_generator');
-                const remaining = 4 - newUses;
+                usesRemaining = 4 - newUses;
                 
-                if (remaining <= 1 && remaining > 0) {
+                document.getElementById('uses-remaining-text').textContent = `Uses remaining: ${usesRemaining}`;
+                
+                if (usesRemaining <= 1 && usesRemaining > 0) {
                     setTimeout(() => {
-                        showUpgradeModal('pricing_generator', remaining);
+                        showUpgradeModal('pricing_generator', usesRemaining);
                     }, 500);
                 }
             }
@@ -500,7 +520,7 @@ ${previewHTML}
             `;
             
             navigator.clipboard.writeText(fullHTML).then(() => {
-                alert('HTML copied to clipboard! Paste it into your website.');
+                alert('✅ HTML copied to clipboard! Paste it into your website.');
             });
         }
 
